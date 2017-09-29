@@ -12,6 +12,7 @@ void setup() {
     
   noLoop();
   
+  textAlign(CENTER, TOP);
   ellipseMode(CENTER);
   background(0);
   
@@ -51,7 +52,19 @@ void draw() {
     endShape(CLOSE);
   
     /* Draw the site */
-    fill(0);
+    // fill(0);
+    // ellipse(siteX, siteY, 5, 5);
+  }
+  
+  // TODO: remove it later
+  for (int i = 0; i < cells.size(); i++) {
+    final JSONArray cell = cells.getJSONArray(i);
+    final JSONArray site = cell.getJSONArray(0);
+    final int siteX = site.getInt(0);
+    final int siteY = site.getInt(1);
+    
+    fill(255);
     ellipse(siteX, siteY, 5, 5);
+    text(String.format("[%d; %d]", siteX, siteY), siteX, siteY + 6);
   }
 }

@@ -17,6 +17,7 @@ import "point" as point;
 # Precondition: three points must not be collinear.
 # @input [ point, point, point ] triplet of non-collinear points
 # @output point center of circle
+# @see http://www.ambrsoft.com/TrigoCalc/Circle3D.htm
 def circle_center:
     . as [ $p1, $p2, $p3 ]
     | ( $p1 | point::x ) as $x1
@@ -26,14 +27,32 @@ def circle_center:
     | ( $p3 | point::x ) as $x3
     | ( $p3 | point::y ) as $y3
 
-    # Calculate slopes
-    | ( [ $p1, $p2 ] | point::slope ) as $ma
-    | ( [ $p2, $p3 ] | point::slope ) as $mb
+    | ( pow($x1;2) + pow($y1;2) ) as $q1
+    | ( pow($x2;2) + pow($y2;2) ) as $q2
+    | ( pow($x3;2) + pow($y3;2) ) as $q3
 
-    | ( ( $ma * $mb * ($y1 - $y3) + $mb * ($x1 + $x2) - $ma * ($x2 + $x3) )
-        / ( 2 * ($mb - $ma) ) ) as $x
+    | ( $x1*($y2-$y3) - $y1*($x2-$x3) + $x2*$y3 - $x3*$y2 ) as $A
 
-    | ( -1/$ma * ($x - ($x1 + $x2)/2) + ($y1 + $y2)/2 ) as $y
+    | ( $q1 * ($y3-$y2)
+        +
+        $q2 * ($y1-$y3)
+        +
+        $q3 * ($y2-$y1) ) as $B
+
+    | ( $q1 * ($x2-$x3)
+        +
+        $q2 * ($x3-$x1)
+        +
+        $q3 * ($x1-$x2) ) as $C
+
+    | ( $q1 * ($x3*$y2-$x2*$y3)
+        +
+        $q2 * ($x1*$y3-$x3*$y1)
+        +
+        $q3 * ($x2*$y1-$x1*$y2) ) as $D
+
+    | ( -$B / (2*$A) ) as $x
+    | ( -$C / (2*$A) ) as $y
 
     | [ $x, $y ]
 ;

@@ -1,6 +1,6 @@
 module "parabola";
 
-include "point";
+import "point" as point;
 
 ##
 # type parabola = {
@@ -23,14 +23,18 @@ include "point";
 # @return triplet of [a, h, k]
 # @see https://www.physicsforums.com/threads/parabolas-canonical-form-help-please.548439
 def to_standard_form:
-    ( .focus | x ) as $fx
-    | ( .focus | y ) as $fy
+    ( .focus | point::x ) as $fx
+    | ( .focus | point::y ) as $fy
     | ( $fy - .directrix ) as $fl
-    | [
-        1 / ( $fl * 2 ),
-        $fx,
-        $fy - $fl / 2
-    ]
+    | if $fl < 0 then
+          [
+              1 / ( $fl * 2 ),
+              $fx,
+              $fy - $fl / 2
+          ]
+      else
+          error("Focus length of parabola is \($fl)")
+      end
 ;
 
 ##
@@ -42,7 +46,7 @@ def eval($func):
     . as $x
     | $func as [ $a, $h, $k ]
 
-    | $a * pow(( $x - $h );2) + $k
+    | $a * pow(( $x - $h ); 2) + $k
 ;
 
 ##
@@ -83,7 +87,7 @@ def intersections($p1; $p2):
             # One solution
             ( -$c / $b ) as $x
             | ( $x | eval($p1) ) as $y
-            | [ $x, $y ]
+            | [ [ $x, $y ] ]
         end
       else
         ( pow($b;2) - 4 * $a * $c ) as $D

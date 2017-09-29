@@ -6,10 +6,27 @@ module "helpers";
 # @author hosuaby
 
 ##
+# Produces array of pairs (two successive elements) from supplied array.
+# Precondition: supplied array must have at least two elements.
+# Example:
+#       Input: [5, 7, 3, 0, 1, 5, 6]
+#       Output: [[5, 7], [7, 3], [3, 0], [0, 1], [1, 5], [5, 6]]
+# @input {any[]} array
+# @output {[any, any][]} array of pairs
+def pairs:
+    . as $array
+    | if length > 1 then
+          [ range(length - 1) | $array[. : .+2] ]
+      else
+          error("Array \(.) has less than 2 elements")
+      end
+;
+
+##
 # Produces array of triplets (three successive elements) from supplied array.
 # Precondition: supplied array must have at least three elements.
 # Example:
-#       Input: [5, 7, 3, 0, 1, 5, 6] | triplets
+#       Input: [5, 7, 3, 0, 1, 5, 6]
 #       Output: [[5, 7, 3], [7, 3, 0], [3, 0, 1], [0, 1, 5], [1, 5, 6]]
 # @input array
 # @output array of triplets
@@ -41,4 +58,33 @@ def values:
     . as $obj
     | keys_unsorted
     | map($obj[.])
+;
+
+##
+# Repeat supplied input $n times. If $n is 0 or negative method produces no output.
+# Example:
+#       [ 42 | times(3) ]
+#       Output: [ 42, 42, 42 ]
+# @input any
+# @output input repeated $n times
+def times($n):
+    . as $input
+    | foreach range($n) as $i (null; null; $input)
+;
+
+##
+# Finds the first element of the array which satisfies provided condition cond. If no such element,
+# returns null.
+# @input {any[]} array
+# @param cond condition that element must satisfy
+# @output {[any, number] | null} pair of found element/index of element, null if no element
+# satisfying condition was found
+def find_first(cond):
+    to_entries
+    | map(select(.value | cond))
+    | if length > 0 then
+          [ .[0].value, .[0].key ]
+      else
+          null
+      end
 ;

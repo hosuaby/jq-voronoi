@@ -1,0 +1,7 @@
+import "fortune" as fortune; fortune::y_comparator
+[{"type":"circle","siteId":"16","triplet":[{"type":"site","id":"3","x":294,"y":70},{"type":"site","id":"16","x":151,"y":18},{"type":"site","id":"1","x":49,"y":17}],"center":[96.33879093198992,390.9433249370277],"radius":376.92780660474244,"x":96.33879093198992,"y":767.8711315417702},{"type":"site","id":"5","x":202,"y":85}]
+682.8711315417702
+
+import "fortune" as fortune; fortune::order_halfedges
+[{"startPoint":[108.95251396648045,80.41620111731844],"endPoint":[131.92857142857176,0]},{"startPoint":[0,86.70192307692308],"endPoint":[108.95251396648045,80.41620111731844]},{"startPoint":[131.92857142857176,0],"endPoint":[0,0]},{"startPoint":[0,0],"endPoint":[0,86.70192307692308]}]
+[{"startPoint":[108.95251396648045,80.41620111731844],"endPoint":[131.92857142857176,0]},{"startPoint":[131.92857142857176,0],"endPoint":[0,0]},{"startPoint":[0,0],"endPoint":[0,86.70192307692308]},{"startPoint":[0,86.70192307692308],"endPoint":[108.95251396648045,80.41620111731844]}]

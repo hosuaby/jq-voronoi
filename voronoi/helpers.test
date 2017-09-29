@@ -1,0 +1,39 @@
+import "helpers" as helpers; helpers::pairs
+[ 5, 7, 3, 0, 1, 5, 6 ]
+[ [5, 7], [7, 3], [3, 0], [0, 1], [1, 5], [5, 6] ]
+
+import "helpers" as helpers; try helpers::pairs catch test("^Array .+ has less than 2 elements$")
+[5]
+true
+
+import "helpers" as helpers; helpers::triplets
+[ 5, 7, 3, 0, 1, 5, 6 ]
+[ [5, 7, 3], [7, 3, 0], [3, 0, 1], [0, 1, 5], [1, 5, 6] ]
+
+import "helpers" as helpers; try helpers::triplets catch test("^Array .+ has less than 3 elements$")
+[5, 7]
+true
+
+import "helpers" as helpers; helpers::key_by("KEY_" + (. | tostring))
+[5, 8, 9, 15]
+{"KEY_5": 5, "KEY_8": 8, "KEY_9": 9, "KEY_15": 15}
+
+import "helpers" as helpers; helpers::key_by(.id)
+[ { "id": "a", "content": "Frodon" }, { "id": "b", "hobbit": "Bilbo" } ]
+{ "a":{"id":"a","content":"Frodon"}, "b":{"id":"b","hobbit":"Bilbo"} }
+
+import "helpers" as helpers; helpers::values
+{ "a": 10, "b": 15 }
+[10, 15]
+
+import "helpers" as helpers; [ . | helpers::times(3) ]
+42
+[42, 42, 42]
+
+import "helpers" as helpers; helpers::find_first(. % 2 == 0)
+[ 7, 3, 2, 5, 4 ]
+[ 2, 2 ]
+
+import "helpers" as helpers; helpers::find_first(. > 10)
+[ 7, 3, 2, 5, 4 ]
+null

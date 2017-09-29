@@ -47,6 +47,16 @@ def equals($a; $b):
     | $ax == $bx and $ay == $by
 ;
 
+def close($a; $b):
+    ( $a | x ) as $ax
+    | ( $a | y ) as $ay
+    | ( $b | x ) as $bx
+    | ( $b | y ) as $by
+    | ( $bx - $ax ) as $dX
+    | ( $by - $ay ) as $dY
+    | pow($dX; 2) < 0.005 and pow($dY; 2) < 0.005
+;
+
 ##
 # Calculates Euclidean distance between points $a and $b.
 # @input nothing
@@ -78,26 +88,35 @@ def angle($a; $b):
     | ( $a | y ) as $ay
     | ( $b | x ) as $bx
     | ( $b | y ) as $by
-    | atan2($bx - $ax; $by - $ay)
+    | atan2($by - $ay; $bx - $ax)
 ;
 
 ##
 # Tests if tree supplied points are collinear.
-# @input [ point, point, point ] triplet of points
-# @output true - if three points are collinear, false if not
-# @see https://stackoverflow.com/questions/3813681/checking-to-see-if-3-points-are-on-the-same-line
+# @input {[ point, point, point ]} triplet of points
+# @output {boolean} true - if three points are collinear, false if not
+# @see http://www.geeksforgeeks.org/orientation-3-ordered-points/
 def are_collinear:
-    ( .[0] | x ) as $ax
-    | ( .[0] | y ) as $ay
-    | ( .[1] | x ) as $bx
-    | ( .[1] | y ) as $by
-    | ( .[2] | x ) as $cx
-    | ( .[2] | y ) as $cy
+    map(x) as [ $x1, $x2, $x3 ]
+    | map(y) as [ $y1, $y2, $y3 ]
 
-    # Test if the area of triangle formed by points is 0
-    # Area of traingle:
-    #   [ Ax * (By - Cy) + Bx * (Cy - Ay) + Cx * (Ay - By) ] / 2
-    | $ax * ($by - $cy) + $bx * ($cy - $ay) + $cx * ($ay - $by) == 0
+    # Points are collinear if:
+    #   (y2 - y1)*(x3 - x2) - (y3 - y2)*(x2 - x1) = 0
+    | ($y2 - $y1) * ($x3 - $x2) - ($y3 - $y2) * ($x2 - $x1) == 0
+;
+
+##
+# Tests if tree supplied points are counter-clockwise ordered.
+# @input {[ point, point, point ]} triplet of points
+# @output {boolean} true - if three points are counter-clockwise ordered, false if not
+# @see http://www.geeksforgeeks.org/orientation-3-ordered-points/
+def are_counterclockwise:
+    map(x) as [ $x1, $x2, $x3 ]
+    | map(y) as [ $y1, $y2, $y3 ]
+
+    # Points are counter-clockwise ordered if:
+    #   (y2 - y1)*(x3 - x2) - (y3 - y2)*(x2 - x1) < 0
+    | ($y2 - $y1) * ($x3 - $x2) - ($y3 - $y2) * ($x2 - $x1) < 0
 ;
 
 ##
@@ -110,26 +129,11 @@ def slope:
     | ( .[1] | x ) as $x2
     | ( .[1] | y ) as $y2
 
-    | ( $y2 - $y1 ) / ( $x2 -$x1 )
-;
-
-##
-# Calculates general form of the line that pass through two points supplied as input.
-# General form of the line:     Ax + By + C = 0
-# @input {[ point, point ]} pair of points
-# @output {[ number, number, number ]} respectively A, B & C of general equation of the line
-# @see https://stackoverflow.com/a/13242831
-def to_general_form:
-    ( .[0] | x ) as $x1
-    | ( .[0] | y ) as $y1
-    | ( .[1] | x ) as $x2
-    | ( .[1] | y ) as $y2
-
-    | ( $y1 - $y2 ) as $a
-    | ( $x2 - $x1 ) as $b
-    | ( ($x1-$x2)*$y1 + ($y2-$y1)*$x1 ) as $c
-
-    | [ $a, $b, $c ]
+    | if $x1 != $x2 then
+          ( $y2 - $y1 ) / ( $x2 -$x1 )
+      else
+          error("Slope cannot be counted for vertical line")
+      end
 ;
 
 ##
@@ -141,7 +145,10 @@ def to_general_form:
 # @output {[ number, number ]} respectively m & b of gradient-intercept of the line
 # @see https://www.mathplanet.com/education/algebra-1/formulating-linear-equations/writing-linear-equations-using-the-slope-intercept-form
 def to_gradient_intercept_form:
-    slope as $slope
+    ( try
+          slope
+      catch
+          error("Vertical line cannot be expressed in Gradient-Intercept form") ) as $slope
     | ( .[0] | x ) as $x1
     | ( .[0] | y ) as $y1
 
@@ -158,9 +165,16 @@ def to_gradient_intercept_form:
 # @output {[ number, number ]} perpendicular line in gradient-intercept form
 # @see http://www.purplemath.com/modules/strtlneq3.htm
 def perpendicular($point):
+    . as [ $m ]
+
+    | if $m == 0 then
+          error("Impossible to express in Gradien-Intercept form line perpendicular to horizontal line")
+      else
+          .
+      end
 
     # Perpendicular slope: -1/m
-    ( -1 / .[0] ) as $slope
+    | ( -1 / $m ) as $slope
 
     # b = y + mx
     | ( $point | x ) as $x
@@ -180,10 +194,15 @@ def perpendicular($point):
 # @output {[ number, number ]} gradient-intercept form of the line by y
 def form_by_y:
     . as [ $m, $b ]
-    | ( 1 / $m ) as $inverted_slope
-    | ( -1 * $inverted_slope * $b ) as $minus_c
 
-    | [ $inverted_slope, $minus_c ]
+    | if $m != 0 then
+          ( 1 / $m ) as $inverted_slope
+          | ( -1 * $inverted_slope * $b ) as $minus_c
+
+          | [ $inverted_slope, $minus_c ]
+      else
+          error("Horizontal line can not be expressed in form x = 1/m * y - c")
+      end
 ;
 
 ##
@@ -198,20 +217,6 @@ def form_by_y:
 def eval_line($val):
     . as [ $slope, $intercept ]
     | $slope * $val + $intercept
-;
-
-##
-# Calculates angle (in radians) of line segment formed by supplied pair of points. Function assumes
-# the first point of the pair to be a "left" point.
-# @input {[ point, point ]} pair of points
-# @output {number} angle of the line
-def angle:
-    ( .[0] | x ) as $x1
-    | ( .[0] | y ) as $y1
-    | ( .[1] | x ) as $x2
-    | ( .[1] | y ) as $y2
-
-    | atan2($y2 - $y1; $x2 - $x1)
 ;
 
 ##

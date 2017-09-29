@@ -2,11 +2,12 @@
 
 minX=0
 minY=0
-maxX=200
-maxY=300
-nbPoints=8
+maxX=600
+maxY=600
+nbPoints=40
 
 echo "["
+echo "[$minX, $minY], [$maxX, $maxY],"
 
 for (( i=1; i<=$nbPoints; i++ ))
 do
