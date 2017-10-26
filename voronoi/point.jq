@@ -176,10 +176,10 @@ def perpendicular($point):
     # Perpendicular slope: -1/m
     | ( -1 / $m ) as $slope
 
-    # b = y + mx
+    # b = y - mx
     | ( $point | x ) as $x
     | ( $point | y ) as $y
-    | ( $y + $slope * $x ) as $intercept
+    | ( $y - $slope * $x ) as $intercept
 
     | [ $slope, $intercept ]
 ;

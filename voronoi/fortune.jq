@@ -119,15 +119,18 @@ def _break2point($l; $sites):
       end
 
     | if length == 1 then
-          if ($leftSite | point::x) < (.[0] | point::x) then
-              .[0]
-          elif $side == "left" then
-              # Minus infinity
-              [-99999999, (.[0] | point::y)]
-          else
-              # Plus infinity
-              [99999999, (.[0] | point::y)]
-          end
+          ( .[0] | point::x ) as $x
+          | ( .[0] | point::y ) as $y
+
+          | if ($leftSite | point::x) <= $x and ($rightSite | point::x) >= $x then
+                .[0]
+            elif $side == "left" then
+                # Minus infinity
+                [-99999999, $y]
+            else
+                # Plus infinity
+                [99999999, $y]
+            end
       elif length == 2 then
           # If parabolas intersect in two points we only keep point between left and right site
           if $side == "left" then
@@ -137,8 +140,20 @@ def _break2point($l; $sites):
           end
       else
           # No parabola intersection
-          error("Cannot find breakpoint. Left site: \($leftSite). Right site: \($rightSite). "
-              + "L: \($l)")
+          ( [ $leftSite, $rightSite ] | point::midpoint ) as $midpoint
+          | ( $midpoint | point::y ) as $y
+          | if ($leftSite | point::x) <= ($rightSite | point::x) then
+                $midpoint
+            elif $side == "left" then
+                # Minus infinity
+                [-99999999, $y]
+            else
+                # Plus infinity
+                [99999999, $y]
+            end
+
+          #error("Cannot find breakpoint. Left site: \($leftSite). Right site: \($rightSite). "
+          #    + "L: \($l)")
       end
 ;
 
@@ -287,70 +302,12 @@ def insert_site($site; $l; $sites):
 ;
 
 ##
-# Removes all occurrences of the $site from supplied BST and associated break points.
-# @input root node of BST. Can be null for empty tree
-# @param $siteId id of site to remove
-# @output BST with removed site
-def remove_site($siteId):
-    if .data.type == "site" and .data.id == $siteId then
-        null    # remove the site
-    elif .data.type == "break" then
-        setpath([ "left" ]; .left | remove_site($siteId))
-        | setpath([ "right" ]; .right | remove_site($siteId))
-        | if .left == null then
-              .right
-          elif .right == null then
-              .left
-          elif .data.leftSiteId == $siteId then
-              if .left.data.type == "break" then
-                  setpath([ "data", "leftSiteId" ]; .left.data.rightSiteId)
-              else
-                  setpath([ "data", "leftSiteId" ]; .left.data.id)
-              end
-          elif .data.rightSiteId == $siteId then
-              if .right.data.type == "break" then
-                  setpath([ "data", "rightSiteId" ]; .right.data.leftSiteId)
-              else
-                  setpath([ "data", "rightSiteId" ]; .right.data.id)
-              end
-          else
-              .     # other breakpoint
-          end
-    else    # another site
-        .
-    end
-;
-
-##
+# TODO: check doc
 # Removes an ark from supplied BST that was shrinked to zero at point $circleEvent.center.
 # @input {node} root node of BST. Can be null for empty tree
 # @param $circleEvent {circleEvent} circle event that makes ark disappear
 # @param $sites {{ [siteId: string]: site }} map of sites
 # @output {node} BST with removed ark
-def remove_ark_old($circleEvent; $sites):
-    if bstree::is_leaf then
-        error("Can not find ark to remove. Event: \($circleEvent)")
-    else
-        ( $circleEvent | point::y ) as $l
-        | if point::close(.data | _break2point($l; $sites); $circleEvent.center) then
-              # One the the children is the ark to remove
-              if .left != null and .left.data.type == "site" and .left.data.id == $circleEvent.siteId then
-                  .right      # keep only right child
-              elif .right != null and .right.data.type == "site" and .right.data.id == $circleEvent.siteId then
-                  .left       # keep only left child
-              else
-                  error("Can not find ark to remove. Event: \($circleEvent)")
-              end
-          elif ([ $circleEvent, .data ] | bs_comparator($l; $sites) ) < 0 then
-              # Look on the left
-              setpath([ "left" ]; .left | remove_ark($circleEvent; $sites))
-          else
-              # Look on the right
-              setpath([ "right" ]; .right | remove_ark($circleEvent; $sites))
-          end
-    end
-;
-
 def remove_ark($circleEvent; $sites; $prec; $next):
     if bstree::is_leaf then
         if .data.id == $circleEvent.siteId
@@ -709,7 +666,10 @@ def remove_zero_length_halhedges:
     setpath([ "halfedges" ];
         .halfedges
         | helpers::values
-        | map(select(point::equals(.startPoint; .endPoint) | not))
+        | map(select(
+              .startPoint != null
+              and .endPoint != null
+              and point::equals(.startPoint; .endPoint) | not))
         | helpers::key_by(.id)
     )
 ;
@@ -788,86 +748,113 @@ def create_cells($boundaries):
 ##
 # @input {cell} cell to close
 def close_cell($boundaries):
+    def add_start($startPoint):
+        setpath([ "starts" ]; .starts + [ $startPoint ])
+    ;
+
+    def add_end($endPoint):
+        setpath([ "ends" ]; .ends + [ $endPoint ])
+    ;
+
+    def insert_in_border($point; $borders):
+        ( $point | point::x ) as $x
+        | ( $point | point::y ) as $y
+        | $borders as [ $minX, $minY, $maxX, $maxY ]
+
+        | if $y == $minY then
+              # Top
+              setpath([ "top" ]; .top + [ $point ])
+          elif $x == $minX then
+              # Left
+              setpath([ "left" ]; .left + [ $point ])
+          elif $y == $maxY then
+              # Bottom
+              setpath([ "bottom" ]; .bottom + [ $point ])
+          else
+              # Right
+              setpath([ "right" ]; .right + [ $point ])
+          end
+    ;
+
+    def find_end($start; $endPoints):
+        . as $orderedPoints
+
+        | [$start, $endPoints] | $orderedPoints
+
+        | ( helpers::find_first(point::equals(.; $start)) | .[1] ) as $startIndex
+        | helpers::cyclic_indexes($startIndex)
+        | map([$orderedPoints[.], .])
+        | helpers::find_first(.[0] as $point | $endPoints | any(point::equals(.; $point)))
+        | .[0]
+    ;
+
     . as $cell
     | ( $boundaries[0] | point::x ) as $minX
     | ( $boundaries[0] | point::y ) as $minY
     | ( $boundaries[1] | point::x ) as $maxX
     | ( $boundaries[1] | point::y ) as $maxY
+    | [ $minX, $minY, $maxX, $maxY ] as $borders
+
+    | {
+          top: [ [$maxX, $minY], [$minX, $minY] ],
+          bottom: [ [$minX, $maxY], [$maxX, $maxY] ],
+          left: [ [$minX, $minY], [$minX, $maxY] ],
+          right: [ [$maxX, $maxY], [$maxX, $minY] ],
+          starts: [],
+          ends: []
+      }
 
     | reduce $cell.halfedges[] as $halfedge (
-          [null, null];
+          .;
+
           if $halfedge.startInfinite then
-              [ .[0], $halfedge.startPoint ]
-          elif $halfedge.endInfinite then
-              [ $halfedge.endPoint, .[1] ]
+              add_end($halfedge.startPoint)
+              | insert_in_border($halfedge.startPoint; $borders)
           else
               .
           end
+
+          | if $halfedge.endInfinite then
+                add_start($halfedge.endPoint)
+                | insert_in_border($halfedge.endPoint; $borders)
+            else
+                .
+            end
       )
 
-    | ( if (.[0] | point::x) == $minX then
-            "down"
-        elif (.[0] | point::y) == $maxY then
-            "right"
-        elif (.[0] | point::x) == $maxX then
-            "up"
-        else
-            "left"
-        end ) as $direction
-
     | {
-          curr: .[0],
-          dest: .[1],
-          direction: $direction,
-          halfedges: []
+          top: .top | sort_by(point::x) | reverse,
+          bottom: .bottom | sort_by(point::x),
+          left: .left | sort_by(point::y),
+          right: .right | sort_by(point::y) | reverse,
+          starts,
+          ends
       }
-    | (until(point::equals(.curr; .dest);
-          ( .curr | point::x ) as $x1
-          | ( .curr | point::y ) as $y1
-          | ( .dest | point::x ) as $x2
-          | ( .dest | point::y ) as $y2
 
-          | (if .direction == "down" then
-                if $x1 == $x2 and $y2 >= $y1 and $y2 <= $maxY then
-                    .dest
-                else
-                    [ $minX, $maxY ]
-                end
-            elif .direction == "right" then
-                if $y1 == $y2 and $x2 >= $x1 and $x2 <= $maxX then
-                    .dest
-                else
-                    [ $maxX, $maxY ]
-                end
-            elif .direction == "up" then
-                if $x1 == $x2 and $y2 <= $y1 and $y2 >= $minY then
-                    .dest
-                else
-                    [ $maxX, $minY ]
-                end
-            else    # left
-                if $y1 == $y2 and $x2 <= $x1 and $x2 >= $minX then
-                    .dest
-                else
-                    [ $minX, $minY ]
-                end
-            end) as $next
+    | reduce .starts[] as $start (
+          {
+              orderedPoints: ( .top[:-1] + .left[:-1] + .bottom[:-1] + .right[:-1] ),
+              halfedges: [],
+              starts,
+              ends
+          };
 
-          | {
-                curr: $next,
-                dest,
-                direction: (if .direction == "down" then
-                               "right"
-                           elif .direction == "right" then
-                               "up"
-                           elif .direction == "up" then
-                               "left"
-                           else
-                               "down"
-                           end),
-                halfedges: (.halfedges + [{ startPoint: .curr, endPoint: $next }])
-            }
-      ) | .halfedges) as $newHalfedges
+          .ends as $ends
+          | .orderedPoints as $orderedPoints
+          | ( $orderedPoints | helpers::find_first(point::equals(.; $start)) | .[1] ) as $startIndex
+          | ( $orderedPoints | find_end($start; $ends) | .[1] ) as $endIndex
+
+          | ( $orderedPoints
+              | helpers::extract(helpers::cyclic_indexes($startIndex; $endIndex))
+              | helpers::pairs
+              | map({ startPoint: .[0], endPoint: .[1] }) ) as $newHalfedges
+          | setpath([ "halfedges" ]; .halfedges + $newHalfedges)
+
+          # Remove used start and end points
+          | setpath([ "orderedPoints" ]; .orderedPoints | del(.[$startIndex, $endIndex]))
+      )
+
+    | ( .halfedges | map(select(point::equals(.startPoint; .endPoint) | not)) ) as $newHalfedges
 
     | $cell
     | setpath([ "halfedges" ]; .halfedges + $newHalfedges)
@@ -907,98 +894,108 @@ def reorder_cells_halfedges:
 # @param $boundaries [ point, point ] two points defining rectangle delimiting space where voronoi
 # must be calculated
 def fortune($boundaries):
+    if length == 1 then
+        # Degenerate case with a single site
+        ( $boundaries[0] | point::x ) as $minX
+        | ( $boundaries[0] | point::y ) as $minY
+        | ( $boundaries[1] | point::x ) as $maxX
+        | ( $boundaries[1] | point::y ) as $maxY
 
-    # Create the initial state
-    reduce .[] as $input (
+        | [[ .[0], [$maxX, $minY], [$minX, $minY], [$minX, $maxY], [$maxX, $maxY] ]]
+    else
 
-        # Initial state
-        {
-            bstree: null,
-            events: [],
-            seen: [],
-            sites: {},
-            halfedges: {},
-            cells: {},
-            id_seed: 0
-        };
+      # Create the initial state
+      reduce .[] as $input (
 
-        .id_seed as $site_id
-        | ( $input | { type: "site", id: $site_id | tostring, x: .[0], y: .[1] } ) as $site
-        | {
-            bstree,
-            halfedges,
-            cells,
-            seen,
-            events: .events | queue::enqueue($site),
-            sites: .sites | setpath([ $site_id | tostring ]; $site),
-            id_seed: ( $site_id + 1 )
-        }
-    )
+          # Initial state
+          {
+              bstree: null,
+              events: [],
+              seen: [],
+              sites: {},
+              halfedges: {},
+              cells: {},
+              id_seed: 0
+          };
 
-    # Process event queue
-    | until(.events | queue::is_empty;
-        . as $state     # store current state
-        | .sites as $sites
+          .id_seed as $site_id
+          | ( $input | { type: "site", id: $site_id | tostring, x: .[0], y: .[1] } ) as $site
+          | {
+              bstree,
+              halfedges,
+              cells,
+              seen,
+              events: .events | queue::enqueue($site),
+              sites: .sites | setpath([ $site_id | tostring ]; $site),
+              id_seed: ( $site_id + 1 )
+          }
+      )
 
-        # Dequeue next event
-        | [ .events | queue::dequeue(y_comparator) ] as [ $event, $queue ]
-        | ( $event | point::y ) as $l
-        | setpath([ "events" ]; $queue)
+      # Process event queue
+      | until(.events | queue::is_empty;
+          . as $state     # store current state
+          | .sites as $sites
 
-        # Process site event
-        | if $event.type == "site" then
-              handle_site_event($event)
-          else
-              ( $event.triplet | map(.id) | sort ) as $ids
-              # TODO: refactor check for seen triplets in handle_circle_event method
-              | if .seen | any(. == $ids) | not then
-                    # Not seen this triplet again
-                    handle_circle_event($event)
-                    | setpath([ "seen" ]; .seen + [$ids])   # mark triplet as seen
-                else
-                    .   # do nothing
-                end
-          end
-    )
+          # Dequeue next event
+          | [ .events | queue::dequeue(y_comparator) ] as [ $event, $queue ]
+          | ( $event | point::y ) as $l
+          | setpath([ "events" ]; $queue)
 
-    # Mark unclosed half edges as infinite
-    | . as $voronoi
-    | reduce (.halfedges | values | .[]) as $halfedge (
-          $voronoi;
-
-          if $halfedge.startPoint == null then
-              setpath([ "halfedges", $halfedge.id, "startInfinite" ]; true)
-          else
-              .
-          end
-
-          | if $halfedge.endPoint == null then
-                setpath([ "halfedges", $halfedge.id, "endInfinite" ]; true)
+          # Process site event
+          | if $event.type == "site" then
+                handle_site_event($event)
             else
-                .
+                ( $event.triplet | map(.id) | sort ) as $ids
+                # TODO: refactor check for seen triplets in handle_circle_event method
+                | if .seen | any(. == $ids) | not then
+                      # Not seen this triplet again
+                      handle_circle_event($event)
+                      | setpath([ "seen" ]; .seen + [$ids])   # mark triplet as seen
+                  else
+                      .   # do nothing
+                  end
             end
       )
 
-    # Clean up of halfedges with zero length, necessary in some degenerate cases
-    | remove_zero_length_halhedges
+      # Mark unclosed half edges as infinite
+      | . as $voronoi
+      | reduce (.halfedges | values | .[]) as $halfedge (
+            $voronoi;
 
-    | close_half_infinite_edges($boundaries)
-    # TODO: put clip edges here
+            if $halfedge.startPoint == null then
+                setpath([ "halfedges", $halfedge.id, "startInfinite" ]; true)
+            else
+                .
+            end
 
-    | create_cells($boundaries)
+            | if $halfedge.endPoint == null then
+                  setpath([ "halfedges", $halfedge.id, "endInfinite" ]; true)
+              else
+                  .
+              end
+        )
 
-    | close_unbound_cells($boundaries)
+      # Clean up of halfedges with zero length, necessary in some degenerate cases
+      | remove_zero_length_halhedges
 
-    | reorder_cells_halfedges
+      | close_half_infinite_edges($boundaries)
+      # TODO: put clip edges here
 
-    # Output result
-    | .cells
-    | helpers::values
-    | map(
-          [[ (.site | point::x), (.site | point::y) ]]     # site
-          +
-          # Array of counterclockwise ordered vertices of polygon forming the cell of the site
-          ( .halfedges | map([ (.startPoint | point::x), (.startPoint | point::y) ]) )
-      )
-    #| "done"
+      | create_cells($boundaries)
+
+      | close_unbound_cells($boundaries)
+
+      | reorder_cells_halfedges
+
+      # Output result
+      | .cells
+      | helpers::values
+      | map(
+            [[ (.site | point::x), (.site | point::y) ]]     # site
+            +
+            # Array of counterclockwise ordered vertices of polygon forming the cell of the site
+            ( .halfedges | map([ (.startPoint | point::x), (.startPoint | point::y) ]) )
+        )
+      #| "done"
+    end
 ;

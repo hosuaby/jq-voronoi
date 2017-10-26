@@ -13,6 +13,7 @@ module "helpers";
 #       Output: [[5, 7], [7, 3], [3, 0], [0, 1], [1, 5], [5, 6]]
 # @input {any[]} array
 # @output {[any, any][]} array of pairs
+# TODO: rename to bigrams
 def pairs:
     . as $array
     | if length > 1 then
@@ -30,6 +31,7 @@ def pairs:
 #       Output: [[5, 7, 3], [7, 3, 0], [3, 0, 1], [0, 1, 5], [1, 5, 6]]
 # @input array
 # @output array of triplets
+# TODO: rename to trigrams
 def triplets:
     . as $array
     | if length > 2 then
@@ -87,4 +89,49 @@ def find_first(cond):
       else
           null
       end
+;
+
+##
+# For supplied array generates array of indexes starting from $n and ending at $n-1.
+# Example:
+#       Input: [5, 7, 3, 0, 1, 5, 6] | cyclic_indexes(3)
+#       Output: [3, 4, 5, 6, 0, 1, 2]
+# @input {any[]} array
+# @param {number} $n start index
+# @output {number[]} range of indexes
+def cyclic_indexes($n):
+    [range($n; length)] + [range($n)]
+;
+
+##
+# For supplied array generates array of indexes starting from $from and ending at $to (inclusive).
+# Example:
+#       Input: [5, 7, 3, 0, 1, 5, 6] | cyclic_indexes(3, 2)
+#       Output: [3, 4, 5, 6, 0, 1, 2]
+# @input {any[]} array
+# @param {number} $from start index
+# @param {number} $to end index
+# @output {number[]} range of indexes
+def cyclic_indexes($from; $to):
+    if $from <= $to then
+        [range($from; $to+1)]
+    else
+        [range($from; length)] + [range($to+1)]
+    end
+;
+
+##
+# Returns values from supplied object associated with keys provided as array $keys. Supplied object
+# can be object literal or JSON array. If no value associated with a key, method return null.
+# Values are returned in the same order than provided keys.
+# Example 1:
+#       Input: { "a": 42, "b": "test", "c": ["one", "two"] } | extract(["a", "c"])
+#       Output: [42, ["one", "two"]]
+# Example 2:
+#       Input: [5, 7, 3, 0, 1, 5, 6] | extract([1, 4, 3])
+#       Output: [7, 1, 0]
+def extract($keys):
+    . as $input
+    | $keys
+    | map(try $input[.] catch null)
 ;
