@@ -13,3 +13,7 @@ import "circle" as circle; circle::circle_center
 import "circle" as circle; circle::from_triplet
 [ [2, 7], [3, 5], [7, 8] ]
 { "center": [4.590909090909091, 7.045454545454546], "radius": 2.5913077843162227 }
+
+import "circle" as circle; circle::bottom
+{ "center": [4, 7], "radius": 2 }
+[ 4, 9 ]

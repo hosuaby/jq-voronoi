@@ -1,10 +1,39 @@
-import "line" as line; line::clip([[70, 60], [230, 150]])
-[ [30, 20], [280, 160] ]
-[ [101.42857142857143, 60], [230,132] ]
+import "line" as line; line::eval(3)
+[-2, 11]
+5
 
-import "line" as line; line::clip([[70, 60], [230, 150]])
-[ [280, 160], [30, 20] ]
-[ [230,132], [101.42857142857142, 60] ]
+import "line" as line; line::eval(5)
+[-0.5, 5.5]
+3
 
-import "line" as line; line::clip([[70, 60], [230, 150]])
-[ [10, 10], [20, 20] ]
+import "line" as line; line::midpoint
+[[-1, 2], [3, -6]]
+[1, -2]
+
+import "line" as line; line::slope
+[[3, 5], [2, 7]]
+-2
+
+import "line" as line; try line::slope catch .
+[[3, 5], [3, 7]]
+"Slope cannot be counted for vertical line"
+
+import "line" as line; line::to_gradient_intercept_form
+[[3, 5], [2, 7]]
+[-2, 11]
+
+import "line" as line; try line::to_gradient_intercept_form catch .
+[[3, 5], [3, 7]]
+"Vertical line cannot be expressed in Gradient-Intercept form"
+
+import "line" as line; line::perpendicular([6, 9])
+[-2, 11]
+[0.5, 6]
+
+import "line" as line; try line::perpendicular([6, 9]) catch .
+[0, 6]
+"Impossible to express in Gradien-Intercept form line perpendicular to horizontal line"
+
+import "line" as line; line::form_by_y
+[-2, 11]
+[-0.5, 5.5]

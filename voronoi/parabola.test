@@ -2,6 +2,10 @@ import "parabola" as parabola; parabola::to_standard_form
 { "focus": [ 2, 1 ], "directrix": 3 }
 [ -0.25, 2, 2 ]
 
+import "parabola" as parabola; parabola::eval([1, 3, 4])
+5
+8
+
 import "parabola" as parabola; parabola::intersections([-0.25, 2, 2]; [-1, 1, 2.75])
 null
 [ [-0.5351837584879964, 0.3932108276746691], [1.8685170918213299, 1.9956780612142198] ]

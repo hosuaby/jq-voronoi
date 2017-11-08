@@ -1,0 +1,23 @@
+import "queue" as queue; queue::is_empty
+[]
+true
+
+import "queue" as queue; queue::is_empty
+[ 1 ]
+false
+
+import "queue" as queue; queue::enqueue(6)
+[ 1, 2, 3 ]
+[ 1, 2, 3, 6 ]
+
+import "queue" as queue; queue::enqueue_all([ 6, 17, 42 ])
+[ 1, 2, 3 ]
+[ 1, 2, 3, 6, 17, 42 ]
+
+import "queue" as queue; [ queue::dequeue ]
+[ 1, 2, 3 ]
+[ 1, [2, 3] ]
+
+import "queue" as queue; [ queue::dequeue(.[0]-.[1]) ]
+[ 5, 78, 15, 6, 3, 26, 88, 6 ]
+[ 3, [5, 78, 15, 6, 26, 88, 6] ]

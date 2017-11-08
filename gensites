@@ -1,0 +1,52 @@
+#!/usr/bin/env bash
+
+DEFAULT_HEIGHT=600
+DEFAULT_WIDTH=600
+DEFAULT_NB_POINTS=40
+
+read -r -d '' USAGE <<END
+Generator of random sites
+Usage: gensites                     # width=600 height=600 nbPoints=40
+       or
+       gensites [width] [height]    # nbPoints=40
+       or
+       gensites [width] [height] [nbPoints]
+END
+
+if [ "$#" -eq 0 ]; then
+    width=$DEFAULT_WIDTH
+    height=$DEFAULT_HEIGHT
+    nbPoints=$DEFAULT_NB_POINTS
+elif [ "$#" -eq 1 ]; then
+    width=$DEFAULT_WIDTH
+    height=$DEFAULT_HEIGHT
+    nbPoints=$1
+elif [ "$#" -eq 2 ]; then
+    width=$1
+    height=$2
+    nbPoints=$DEFAULT_NB_POINTS
+elif [ "$#" -eq 3 ]; then
+    width=$1
+    height=$2
+    nbPoints=$3
+else
+    echo "$USAGE"
+    exit 1
+fi
+
+echo -n "["
+echo -n "[0, 0], [$width, $height],"
+
+for (( i=1; i<=$nbPoints; i++ ))
+do
+    x=$[($RANDOM % ($width + 1))]
+    y=$[($RANDOM % ($height + 1))]
+
+    echo -n "[$x, $y]"
+
+    if [ "$i" -lt "$nbPoints" ]; then
+        echo -n ","
+    fi
+done
+
+echo "]"

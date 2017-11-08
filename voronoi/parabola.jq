@@ -3,6 +3,8 @@ module "parabola";
 import "point" as point;
 
 ##
+# Module for work with parabolas.
+#
 # type parabola = {
 #     focus: point,         // focus point of parabola
 #     directrix: number     // y coordinate of directrix line (swipe line)
@@ -19,8 +21,8 @@ import "point" as point;
 # where
 #       a - coefficient of how "skinny" parabola is
 #       [ h, k ] - vertex of parabola
-# @input parabola json object
-# @return triplet of [a, h, k]
+# @input {parabola} parabola json object
+# @return {[ number, number, number ]} triplet of [a, h, k]
 # @see https://www.physicsforums.com/threads/parabolas-canonical-form-help-please.548439
 def to_standard_form:
     ( .focus | point::x ) as $fx
@@ -39,9 +41,9 @@ def to_standard_form:
 
 ##
 # Evaluates function y = a(x-h)²+k for x supplied as input.
-# @param $func triplet of [ a, h, k ]
-# @input x
-# @output evaluated y
+# @param $func {[ number, number, number ]} triplet of [ a, h, k ]
+# @input {number} x
+# @output {number} evaluated y
 def eval($func):
     . as $x
     | $func as [ $a, $h, $k ]
@@ -66,10 +68,10 @@ def eval($func):
 #       a = a1 - a2
 #       b = 2 * (a2h2 - a1h1)
 #       c = a1h1² - a2h2² + k1 - k2
-# @input nothing
-# @param $p1 first parabola in standard form
-# @param $p2 second parabola in standard form
-# @output point[0:2] array of zero, one or two points of intersection between parabolas. If there
+# @input {void} nothing
+# @param $p1 {parabola} first parabola in standard form
+# @param $p2 {parabola} second parabola in standard form
+# @output {point[0:2]} array of zero, one or two points of intersection between parabolas. If there
 # are two points of
 # @see https://conceptdraw.com/a232c3/preview
 def intersections($p1; $p2):

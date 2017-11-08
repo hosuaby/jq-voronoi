@@ -1,45 +1,51 @@
 module "queue";
 
 ##
+# Implementation of queue.
+#
+# type queue = any[];
+#
 # Queue is just a JSON array [].
 # Queue can be used as priority queue if comparator is provided as parameter of dequeue function.
 # Comparator is the function accepting tuple [ $firstElement, $secondElement ] and returning a
-# negative number (generally -1) if $firstElement is strictly inferior, a positive number
-# (generally +1) if $firstElement is strictly superior, and 0 if two elements are equal.
+# negative number if $firstElement is strictly inferior, a positive number if $firstElement is
+# strictly superior, and 0 if two elements are equal.
 #
 # @author hosuaby
 
 ##
 # Checks if supplied queue is empty.
-# @input queue
-# @output true if queue is empty, false if not
+# @input {queue} queue
+# @output {boolean} true if queue is empty, false if not
 def is_empty:
     length == 0
 ;
 
 ##
-# Checks if supplied queue is empty.
-# @input queue
-# @output true if queue is empty, false if not
-def is_not_empty:
-    is_empty | not
-;
-
-##
 # Adds $elem at the tail of supplied queue.
-# @input queue
-# @param $elem element to add into the queue
-# @output updated queue
+# @input {queue} queue
+# @param $elem {any} element to add into the queue
+# @output {queue} updated queue
 def enqueue($elem):
     [ .[], $elem ]
 ;
 
 ##
+# Add miltiple elements at the tail of supplied queue.
+# @input {queue} queue
+# @param $elems {any[]} elements to add into the queue
+# @output {queue} updated queue
+def enqueue_all($elems):
+    . + $elems
+;
+
+##
 # Removes element from the head of the queue. Returns removed element and rest of the queue (tail).
-# @input queue
-# @output $head, $tail
+# @input {queue} queue
+# @output $head {any} element removed from the head,
+#         $tail {any[]} rest of the queue
 def dequeue:
-    if is_not_empty then
+    if is_empty | not then
         .[0], .[1:length]
     else
         error("Queue must not be empty")
@@ -48,11 +54,12 @@ def dequeue:
 
 ##
 # Removes element from the queue having highest priority according provided comparator function.
-# @param comparator comparator function
-# @input queue
-# @output removed element, rest of the queue
+# @input {queue} queue
+# @param comparator {filter} comparator function
+# @output $head {any} element removed from the head,
+#         $tail {any[]} rest of the queue
 def dequeue(comparator):
-    if is_not_empty then
+    if is_empty | not then
         . as $queue
         | length as $l
 

@@ -6,15 +6,14 @@ module "helpers";
 # @author hosuaby
 
 ##
-# Produces array of pairs (two successive elements) from supplied array.
+# Produces array of bigrams (two successive elements) from supplied array.
 # Precondition: supplied array must have at least two elements.
 # Example:
 #       Input: [5, 7, 3, 0, 1, 5, 6]
 #       Output: [[5, 7], [7, 3], [3, 0], [0, 1], [1, 5], [5, 6]]
 # @input {any[]} array
-# @output {[any, any][]} array of pairs
-# TODO: rename to bigrams
-def pairs:
+# @output {[any, any][]} array of bigrams
+def bigrams:
     . as $array
     | if length > 1 then
           [ range(length - 1) | $array[. : .+2] ]
@@ -24,15 +23,14 @@ def pairs:
 ;
 
 ##
-# Produces array of triplets (three successive elements) from supplied array.
+# Produces array of trigrams (three successive elements) from supplied array.
 # Precondition: supplied array must have at least three elements.
 # Example:
 #       Input: [5, 7, 3, 0, 1, 5, 6]
 #       Output: [[5, 7, 3], [7, 3, 0], [3, 0, 1], [0, 1, 5], [1, 5, 6]]
-# @input array
-# @output array of triplets
-# TODO: rename to trigrams
-def triplets:
+# @input {any[]} array
+# @output {[any, any, any][]} array of trigrams
+def trigrams:
     . as $array
     | if length > 2 then
           [ range(length - 2) | $array[. : .+3] ]
@@ -45,8 +43,8 @@ def triplets:
 # Creates an object composed of keys from the results of running each element of supplied array
 # through iteratte. The corresponding value of each key is the last element responsible for
 # generating the key.
-# @input array of elements
-# @param iteratee filter applied to each element to create a key
+# @input {any[]} array of elements
+# @param iteratee {filter} filter applied to each element to create a key
 # @output object composed of elements of supplied array with associated keys
 def key_by(iteratee):
     map({ key: iteratee, value: . }) | from_entries
@@ -63,22 +61,10 @@ def values:
 ;
 
 ##
-# Repeat supplied input $n times. If $n is 0 or negative method produces no output.
-# Example:
-#       [ 42 | times(3) ]
-#       Output: [ 42, 42, 42 ]
-# @input any
-# @output input repeated $n times
-def times($n):
-    . as $input
-    | foreach range($n) as $i (null; null; $input)
-;
-
-##
 # Finds the first element of the array which satisfies provided condition cond. If no such element,
 # returns null.
 # @input {any[]} array
-# @param cond condition that element must satisfy
+# @param cond {filter} condition that element must satisfy
 # @output {[any, number] | null} pair of found element/index of element, null if no element
 # satisfying condition was found
 def find_first(cond):
@@ -130,6 +116,9 @@ def cyclic_indexes($from; $to):
 # Example 2:
 #       Input: [5, 7, 3, 0, 1, 5, 6] | extract([1, 4, 3])
 #       Output: [7, 1, 0]
+# @input {object | any[]} object or array
+# @param $keys {number[] | string[]} keys of fields to exctract
+# @output {any[]} extracted values
 def extract($keys):
     . as $input
     | $keys

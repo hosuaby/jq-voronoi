@@ -1,0 +1,98 @@
+import "bstree" as bstree; bstree::is_leaf
+{ "data": 42, "left": null, "right": null }
+true
+
+import "bstree" as bstree; bstree::is_leaf
+{ "data": 42, "left": { "data": 5, "left": null, "right": null }, "right": { "data": 88, "left": null, "right": null } }
+false
+
+##
+# Input:
+# {
+#   "data": 7,
+#   "left": {
+#     "data": 3,
+#     "left": null,
+#     "right": null
+#   },
+#   "right": {
+#     "data": 18,
+#     "left": {
+#       "data": 10,
+#       "left": {
+#         "data": 8,
+#         "left": null,
+#         "right": null
+#       },
+#       "right": {
+#         "data": 11,
+#         "left": null,
+#         "right": null
+#       }
+#     },
+#     "right": {
+#       "data": 22,
+#       "left": null,
+#       "right": {
+#         "data": 26,
+#         "left": null,
+#         "right": null
+#       }
+#     }
+#   }
+# }
+import "bstree" as bstree; bstree::leaves
+{"data":7,"left":{"data":3,"left":null,"right":null},"right":{"data":18,"left":{"data":10,"left":{"data":8,"left":null,"right":null},"right":{"data":11,"left":null,"right":null}},"right":{"data":22,"left":null,"right":{"data":26,"left":null,"right":null}}}}
+[3, 8, 11, 26]
+
+# Input:
+# {
+#   "data": "A",
+#   "left": {
+#     "data": "X",
+#     "left": null,
+#     "right": null
+#   },
+#   "right": {
+#     "data": "B",
+#     "left": {
+#       "data": "Y",
+#       "left": null,
+#       "right": null
+#     },
+#     "right": {
+#       "data": "Z",
+#       "left": null,
+#       "right": null
+#     }
+#   }
+# }
+import "bstree" as bstree; bstree::rotate_left
+{"data":"A","left":{"data":"X","left":null,"right":null},"right":{"data":"B","left":{"data":"Y","left":null,"right":null},"right":{"data":"Z","left":null,"right":null}}}
+{"data":"B","left":{"data":"A","left":{"data":"X","left":null,"right":null},"right":{"data":"Y","left":null,"right":null}},"right":{"data":"Z","left":null,"right":null}}
+
+# Input:
+# {
+#   "data": "B",
+#   "left": {
+#     "data": "A",
+#     "left": {
+#       "data": "X",
+#       "left": null,
+#       "right": null
+#     },
+#     "right": {
+#       "data": "Y",
+#       "left": null,
+#       "right": null
+#     }
+#   },
+#   "right": {
+#     "data": "Z",
+#     "left": null,
+#     "right": null
+#   }
+# }
+import "bstree" as bstree; bstree::rotate_right
+{"data":"B","left":{"data":"A","left":{"data":"X","left":null,"right":null},"right":{"data":"Y","left":null,"right":null}},"right":{"data":"Z","left":null,"right":null}}
+{"data":"A","left":{"data":"X","left":null,"right":null},"right":{"data":"B","left":{"data":"Y","left":null,"right":null},"right":{"data":"Z","left":null,"right":null}}}

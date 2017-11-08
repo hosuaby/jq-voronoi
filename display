@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+
+# Get directory of this script
+SCRIPT=`realpath -s $0`
+BASEDIR=`dirname $SCRIPT`
+
+# Check the processing-java is on PATH
+processing_java_path=$(which processing-java)
+if [ ! -x "$processing_java_path" ] ; then
+    echo "ERROR: processing-java not on the PATH"
+    echo "It can be got from: https://processing.org/download/"
+    exit 1
+fi
+
+# Build sketch as application if it was not built yet
+if [ ! -d "$BASEDIR/sketchbook/display/built" ]; then
+    echo "Wait for compilation ..."
+    cd $BASEDIR/sketchbook
+    processing-java --sketch=display --output=./display/built --export
+fi
+
+read -r -d '' USAGE <<END
+Visualization tool for Voronoi diagram
+Usage: display.sh [width] [height]
+       or
+       dislay.sh [minX] [minY] [maxX] [maxY]
+END
+
+if [ $# -eq 2 -o $# -eq 4 ]; then
+    "$BASEDIR"/sketchbook/display/built/display "$@"
+else
+    echo "$USAGE"
+    exit 1
+fi

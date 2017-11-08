@@ -18,73 +18,30 @@ import "point" as point; point::distance_euclidean([1, 2]; [1, 4])
 null
 2
 
-import "point" as point; point::angle([1, 2]; [4, 2])
-null
+import "point" as point; point::are_counterclockwise
+[[6, 8], [3, 3], [6, 3]]
+true
+
+import "point" as point; point::compare_by_x
+[[6, 4], [5, 9]]
+1
+
+import "point" as point; point::compare_by_x
+[[6, 4], [6, 9]]
+-5
+
+import "point" as point; point::compare_by_x
+[[6, 4], [6, 4]]
 0
 
-# Expected answer PI / 2
-import "point" as point; point::angle([1, 2]; [1, 4])
-null
-1.5707963267948966
+import "point" as point; point::compare_by_y
+[[6, 4], [5, 9]]
+-5
 
-# Expected answer PI
-import "point" as point; point::angle([4, 2]; [2, 2])
-null
-3.141592653589793
+import "point" as point; point::compare_by_y
+[[6, 4], [5, 4]]
+1
 
-# Expected answer -PI / 2
-import "point" as point; point::angle([1, 4]; [1, 2])
-null
--1.5707963267948966
-
-import "point" as point; point::are_collinear
-[ [0, 0], [2, 1], [4, 2] ]
-true
-
-import "point" as point; point::are_collinear
-[ [0, 0], [3, 5], [7, 2] ]
-false
-
-import "point" as point; point::are_counterclockwise
-[ [6, 3], [3, 3], [6, 8] ]
-true
-
-import "point" as point; point::slope
-[ [3, 5], [2, 7] ]
--2
-
-import "point" as point; try point::slope catch .
-[ [3, 5], [3, 7] ]
-"Slope cannot be counted for vertical line"
-
-import "point" as point; point::to_gradient_intercept_form
-[ [3, 5], [2, 7] ]
-[-2, 11]
-
-import "point" as point; try point::to_gradient_intercept_form catch .
-[ [3, 5], [3, 7] ]
-"Vertical line cannot be expressed in Gradient-Intercept form"
-
-import "point" as point; point::perpendicular([6, 9])
-[-2, 11]
-[0.5, 12]
-
-import "point" as point; try point::perpendicular([6, 9]) catch .
-[0, 6]
-"Impossible to express in Gradien-Intercept form line perpendicular to horizontal line"
-
-import "point" as point; point::form_by_y
-[-2, 11]
-[-0.5, 5.5]
-
-import "point" as point; point::eval_line(3)
-[-2, 11]
-5
-
-import "point" as point; point::eval_line(5)
-[-0.5, 5.5]
-3
-
-import "point" as point; point::midpoint
-[ [-1, 2], [3, -6] ]
-[1, -2]
+import "point" as point; point::compare_by_y
+[[5, 4], [5, 4]]
+0

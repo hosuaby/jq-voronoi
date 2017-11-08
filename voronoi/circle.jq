@@ -3,7 +3,8 @@ module "circle";
 import "point" as point;
 
 ##
-# Circle.
+# Module for work with circles.
+#
 # type circle = {
 #     center: point,
 #     radius: number
@@ -15,8 +16,8 @@ import "point" as point;
 ##
 # Calculates the center of circle that pass through supplied 3 points.
 # Precondition: three points must not be collinear.
-# @input [ point, point, point ] triplet of non-collinear points
-# @output point center of circle
+# @input {[ point, point, point ]} triplet of non-collinear points
+# @output {point} center of circle
 # @see http://www.ambrsoft.com/TrigoCalc/Circle3D.htm
 def circle_center:
     . as [ $p1, $p2, $p3 ]
@@ -60,8 +61,8 @@ def circle_center:
 ##
 # Creates the circle that passes through supplied 3 points.
 # Precondition: three points must not be collinear.
-# @input [ point, point, point ] triplet of non-collinear points
-# @output circle
+# @input {[ point, point, point ]} triplet of non-collinear points
+# @output {circle} circle
 def from_triplet:
     circle_center as $center
     | point::distance_euclidean(.[0]; $center) as $radius
@@ -73,8 +74,8 @@ def from_triplet:
 
 ##
 # Calculates bottom (the lowest point) of the circle.
-# @input circle
-# @output point the lowest point
+# @input {circle} circle
+# @output {point} the lowest point of the circle
 def bottom:
     [
         (.center | point::x),
