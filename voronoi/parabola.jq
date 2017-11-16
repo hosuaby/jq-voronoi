@@ -16,6 +16,18 @@ import "point" as point;
 # @author hosuaby
 
 ##
+# Makes parabola from supplied point and $directrix passed as parameter.
+# @input {point} focus of parabola
+# @param $directrix {number} y coordinate of directrix line
+# @output {parabola} parabola object
+def from_point($directrix):
+    {
+        focus: .,
+        directrix: $directrix
+    }
+;
+
+##
 # Translates parabola json object into standard form for parabola symmetrical by y-axis:
 #       a(x-h)²+k
 # where
@@ -99,7 +111,7 @@ def intersections($p1; $p2):
             # One solution
             ( -$b / 2 * $a ) as $x
             | ( $x | eval($p1) ) as $y
-            | [ $x, $y ]
+            | [ [ $x, $y ] ]
           else
             # Two solutions
             ( (-$b-pow($D;0.5)) / (2*$a) ) as $x1

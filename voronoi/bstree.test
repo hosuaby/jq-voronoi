@@ -7,7 +7,7 @@ import "bstree" as bstree; bstree::is_leaf
 false
 
 ##
-# Input:
+# Input for following tests:
 # {
 #   "data": 7,
 #   "left": {
@@ -41,9 +41,52 @@ false
 #     }
 #   }
 # }
+
+import "bstree" as bstree; bstree::first
+{"data":7,"left":{"data":3,"left":null,"right":null},"right":{"data":18,"left":{"data":10,"left":{"data":8,"left":null,"right":null},"right":{"data":11,"left":null,"right":null}},"right":{"data":22,"left":null,"right":{"data":26,"left":null,"right":null}}}}
+3
+
+import "bstree" as bstree; bstree::last
+{"data":7,"left":{"data":3,"left":null,"right":null},"right":{"data":18,"left":{"data":10,"left":{"data":8,"left":null,"right":null},"right":{"data":11,"left":null,"right":null}},"right":{"data":22,"left":null,"right":{"data":26,"left":null,"right":null}}}}
+26
+
 import "bstree" as bstree; bstree::leaves
 {"data":7,"left":{"data":3,"left":null,"right":null},"right":{"data":18,"left":{"data":10,"left":{"data":8,"left":null,"right":null},"right":{"data":11,"left":null,"right":null}},"right":{"data":22,"left":null,"right":{"data":26,"left":null,"right":null}}}}
 [3, 8, 11, 26]
+
+import "bstree" as bstree; bstree::height
+null
+0
+
+import "bstree" as bstree; bstree::height
+{ "data": 42, "left": null, "right": null }
+1
+
+# Input:
+# {
+#   "data": "A",
+#   "left": {
+#     "data": "X",
+#     "left": null,
+#     "right": null
+#   },
+#   "right": {
+#     "data": "B",
+#     "left": {
+#       "data": "Y",
+#       "left": null,
+#       "right": null
+#     },
+#     "right": {
+#       "data": "Z",
+#       "left": null,
+#       "right": null
+#     }
+#   }
+# }
+import "bstree" as bstree; bstree::height
+{"data":"A","left":{"data":"X","left":null,"right":null},"right":{"data":"B","left":{"data":"Y","left":null,"right":null},"right":{"data":"Z","left":null,"right":null}}}
+3
 
 # Input:
 # {
@@ -96,3 +139,105 @@ import "bstree" as bstree; bstree::rotate_left
 import "bstree" as bstree; bstree::rotate_right
 {"data":"B","left":{"data":"A","left":{"data":"X","left":null,"right":null},"right":{"data":"Y","left":null,"right":null}},"right":{"data":"Z","left":null,"right":null}}
 {"data":"A","left":{"data":"X","left":null,"right":null},"right":{"data":"B","left":{"data":"Y","left":null,"right":null},"right":{"data":"Z","left":null,"right":null}}}
+
+import "bstree" as bstree; bstree::rebalance
+null
+null
+
+import "bstree" as bstree; bstree::rebalance
+{ "data": 42, "left": null, "right": null }
+{ "data": 42, "left": null, "right": null }
+
+# Input:
+# {
+#   "data": "B",
+#   "left": {
+#     "data": "A",
+#     "left": {
+#       "data": "X",
+#       "left": null,
+#       "right": null
+#     },
+#     "right": {
+#       "data": "Y",
+#       "left": null,
+#       "right": null
+#     }
+#   },
+#   "right": {
+#     "data": "Z",
+#     "left": null,
+#     "right": null
+#   }
+# }
+import "bstree" as bstree; bstree::rebalance
+{"data":"B","left":{"data":"A","left":{"data":"X","left":null,"right":null},"right":{"data":"Y","left":null,"right":null}},"right":{"data":"Z","left":null,"right":null}}
+{"data":"B","left":{"data":"A","left":{"data":"X","left":null,"right":null},"right":{"data":"Y","left":null,"right":null}},"right":{"data":"Z","left":null,"right":null}}
+
+# Input:
+# {
+#   "data": "1/2",
+#   "left": {
+#     "data": "s1",
+#     "left": null,
+#     "right": null
+#   },
+#   "right": {
+#     "data": "2/0",
+#     "left": {
+#       "data": "s2",
+#       "left": null,
+#       "right": null
+#     },
+#     "right": {
+#       "data": "0/2",
+#       "left": {
+#         "data": "s0",
+#         "left": null,
+#         "right": null
+#       },
+#       "right": {
+#         "data": "s2",
+#         "left": null,
+#         "right": null
+#       }
+#     }
+#   }
+# }
+import "bstree" as bstree; bstree::rebalance
+{"data":"1/2","left":{"data":"s1","left":null,"right":null},"right":{"data":"2/0","left":{"data":"s2","left":null,"right":null},"right":{"data":"0/2","left":{"data":"s0","left":null,"right":null},"right":{"data":"s2","left":null,"right":null}}}}
+{"data":"2/0","left":{"data":"1/2","left":{"data":"s1","left":null,"right":null},"right":{"data":"s2","left":null,"right":null}},"right":{"data":"0/2","left":{"data":"s0","left":null,"right":null},"right":{"data":"s2","left":null,"right":null}}}
+
+# Input:
+# {
+#   "data": "1/2",
+#   "left": {
+#     "data": "s1",
+#     "left": null,
+#     "right": null
+#   },
+#   "right": {
+#     "data": "2/0",
+#     "left": {
+#       "data": "s2",
+#       "left": null,
+#       "right": null
+#     },
+#     "right": {
+#       "data": "0/2",
+#       "left": {
+#         "data": "s0",
+#         "left": null,
+#         "right": null
+#       },
+#       "right": {
+#         "data": "s2",
+#         "left": null,
+#         "right": null
+#       }
+#     }
+#   }
+# }
+import "bstree" as bstree; bstree::rebalance
+{"data":"1/2","left":{"data":"s1","left":null,"right":null},"right":{"data":"2/0","left":{"data":"s2","left":null,"right":null},"right":{"data":"0/2","left":{"data":"s0","left":null,"right":null},"right":{"data":"s2","left":null,"right":null}}}}
+{"data":"2/0","left":{"data":"1/2","left":{"data":"s1","left":null,"right":null},"right":{"data":"s2","left":null,"right":null}},"right":{"data":"0/2","left":{"data":"s0","left":null,"right":null},"right":{"data":"s2","left":null,"right":null}}}

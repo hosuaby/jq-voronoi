@@ -1,5 +1,7 @@
 import java.util.List;
 import java.util.LinkedList;
+import java.util.Map;
+import java.util.HashMap;
 
 final int WIDTH = 600;
 final int HEIGHT = 600;
@@ -7,8 +9,8 @@ final int HEIGHT = 600;
 String PROCESS_FOLDER;
 String VORONOI_SCRIPT;
 
-final List<int[]> sites = new LinkedList<int[]>();
-final List<int[]> colors = new LinkedList<int[]>();
+final List<Site> sites = new LinkedList<Site>();
+final Map<Site, Integer> colors = new HashMap<Site, Integer>();
 JSONArray cells = new JSONArray();  // array of voronoi cells
 
 void setup() {
@@ -25,13 +27,12 @@ void draw () {
   
   for (int i = 0; i < cells.size(); i++) {
     final JSONArray cell = cells.getJSONArray(i);
-    final JSONArray site = cell.getJSONArray(0);
-    final int siteX = site.getInt(0);
-    final int siteY = site.getInt(1);
+    final JSONArray siteJson = cell.getJSONArray(0);
+    final Site site = new Site(siteJson.getInt(0), siteJson.getInt(1));
     
     /* Draw polygon of the cell */
-    int[] c = colors.get(i);
-    fill( c[0], c[1], c[2]); 
+    int c = colors.get(site);
+    fill(c);
     beginShape();
     
     for (int j = 1; j < cell.size(); j++) {
@@ -43,17 +44,14 @@ void draw () {
   
     /* Draw the site */
     fill(255);
-    ellipse(siteX, siteY, 5, 5);
+    ellipse(site.x, site.y, 5, 5);
   }
 }
 
 void mouseClicked() {
-  sites.add(new int[]{ mouseX, mouseY });
-  colors.add(new int[]{
-    (int) random(255),
-    (int) random(255),
-    (int) random(255)
-  });
+  final Site newSite = new Site(mouseX, mouseY);
+  sites.add(newSite);
+  colors.put(newSite, color(random(255), random(255), random(255)));
   
   JSONArray json = serialize(sites);
   cells = voronoi(json);
@@ -61,7 +59,7 @@ void mouseClicked() {
   redraw();
 }
 
-JSONArray serialize(List<int[]> points) {
+JSONArray serialize(List<Site> sites) {
   JSONArray array = new JSONArray();
   
   /* Add bounding box */
@@ -69,8 +67,8 @@ JSONArray serialize(List<int[]> points) {
   array.append(new JSONArray().append(WIDTH).append(HEIGHT));
   
   /* Add sites */
-  for (int[] site : sites) {
-    array.append(new JSONArray().append(site[0]).append(site[1]));
+  for (Site site : sites) {
+    array.append(new JSONArray().append(site.x).append(site.y));
   }
   
   return array;

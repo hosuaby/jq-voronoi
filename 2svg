@@ -6,6 +6,8 @@
 #   ./2svg --argjson box '[600, 600]'   # where box = [width, height]
 #   or
 #   ./2svg --argjson box '[0, 0, 600, 600]'     # where box = [minX, minY, maxX, maxY]
+#
+# @author hosuaby
 
 ##
 # An implementation of the Microsoft C Runtime rand() pseudorandom number generator (PRNG) function.

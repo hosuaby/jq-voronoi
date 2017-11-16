@@ -68,12 +68,6 @@ import "helpers" as helpers;
 #
 # @author hosuaby
 
-# Largest positive number on IEEE754 double-precision (64-bit)
-def PLUS_INFINITY: 9007199254740992;
-
-# Smallest negative number on IEEE754 double-precision (64-bit)
-def MINUS_INFINITY: -9007199254740992;
-
 ##
 # Site factory.
 # @input {point} point
@@ -103,61 +97,69 @@ def break2point($l; $sites):
     | $sites[$leftSiteId] as $leftSite
     | $sites[$rightSiteId] as $rightSite
 
-    | { focus: $leftSite, directrix: $l }
-    | ( try
-            parabola::to_standard_form
-        catch
-            null ) as $parab1
+    | ( $leftSite
+        | if point::y < $l then
+              parabola::from_point($l)
+              | parabola::to_standard_form
+          else
+              null
+          end ) as $parab1
 
-    | { focus: $rightSite, directrix: $l }
-    | ( try
-            parabola::to_standard_form
-        catch
-            null ) as $parab2
+    | ( $rightSite
+        | if point::y < $l then
+              parabola::from_point($l)
+              | parabola::to_standard_form
+          else
+              null
+          end ) as $parab2
 
     | if $parab1 != null and $parab2 != null then
           parabola::intersections($parab1; $parab2)
+
+          | if length == 2 then
+                if $side == "left" then
+                    .[0]
+                else
+                    .[1]
+                end
+            elif length == 1 then
+                ( .[0] | point::x ) as $x
+                | ( .[0] | point::y ) as $y
+
+                | if ($leftSite | point::x) <= $x and ($rightSite | point::x) >= $x then
+                      # Left site is really on the left and right site really on the right of break
+                      .[0]
+                  elif $side == "left" then
+                      [ helpers::MINUS_INFINITY, $y ]      # minus infinity
+                  else
+                      [ helpers::PLUS_INFINITY, $y ]       # plus infinity
+                  end
+            else
+                null    # no intersection
+            end
       elif $parab1 != null and $parab2 == null then
           $rightSite
           | point::x
-          | [ [., parabola::eval($parab1)] ]
+          | [., parabola::eval($parab1)]
       elif $parab1 == null and $parab2 != null then
           $leftSite
           | point::x
-          | [ [., parabola::eval($parab2)] ]
+          | [., parabola::eval($parab2)]
       else
-          []    # no intersection
+          null    # no intersection
       end
 
-    | if length == 2 then
-          # If parabolas intersect in two points we only keep point between left and right site
-          if $side == "left" then
-              .[0]
-          else
-              .[1]
-          end
-      elif length == 1 then
-          ( .[0] | point::x ) as $x
-          | ( .[0] | point::y ) as $y
-
-          | if ($leftSite | point::x) <= $x and ($rightSite | point::x) >= $x then
-                # If lest site is really on the left and right site really on the right of break
-                .[0]
-            elif $side == "left" then
-                [ MINUS_INFINITY, $y ]      # minus infinity
-            else
-                [ PLUS_INFINITY, $y ]       # plus infinity
-            end
+    | if . != null then
+          .
       else
-          # No parabola intersection
           ( [ $leftSite, $rightSite ] | line::midpoint ) as $midpoint
           | ( $midpoint | point::y ) as $y
           | if ($leftSite | point::x) <= ($rightSite | point::x) then
                 $midpoint
             elif $side == "left" then
-                [ MINUS_INFINITY, $y ]      # minus infinity
+                [ helpers::MINUS_INFINITY, $y ]      # minus infinity
             else
-                [ PLUS_INFINITY, $y ]       # plus infinity
+                [ helpers::PLUS_INFINITY, $y ]       # plus infinity
             end
       end
 ;
@@ -181,52 +183,35 @@ def compare_nodes($l; $sites):
 ;
 
 ##
-# Creates subtree for inserted site.
-# @input {node_data} data of a new node
-# @param $parent {[ any | null, "left" | "right" ]} data on the parent node and where a new node
-#        must be inserted
+# Creates subtree for inserted ark.
+# @input {site} inserted ark
+# @param $parent {site | null} parent ark. Can be null
 # @output {node<node_data>} created subtree
 def make_site_subtree($parent):
-    if $parent[0] == null then
+    if $parent == null then
         bstree::node(.)
-    elif $parent[1] == "left" then
+    else
         bstree::node({
                 type: "break",
                 side: "right",
                 leftSiteId: .id,
-                rightSiteId: $parent[0].id
+                rightSiteId: $parent.id
             };
             bstree::node({
                     type: "break",
                     side: "left",
-                    leftSiteId: $parent[0].id,
+                    leftSiteId: $parent.id,
                     rightSiteId: .id
                 };
-                bstree::node($parent[0]);
+                bstree::node($parent);
                 bstree::node(.));
-            bstree::node($parent[0]))
-    else    # right
-        bstree::node({
-                type: "break",
-                side: "left",
-                leftSiteId: $parent[0].id,
-                rightSiteId: .id
-            };
-            bstree::node($parent[0]);
-            bstree::node({
-                    type: "break",
-                    side: "right",
-                    leftSiteId: .id,
-                    rightSiteId: $parent[0].id
-                };
-                bstree::node(.);
-                bstree::node($parent[0])))
+            bstree::node($parent))
     end
 ;
 
 ##
 # Inserts a new site into binary search tree.
-# @input {node<node_data>} BST
+# @input {node<node_data> | null} BST. Can be null for empty tree
 # @param $site {site} inserted site
 # @param $l {number} y coordinate of swipeline
 # @param $sites {{ [sideId: number]: site }} map of existing sites
@@ -236,34 +221,63 @@ def insert_site($site; $l; $sites):
         bstree::node($site)
     elif bstree::is_leaf then
         .data as $data
-        | if ([ $data, $site ] | point::compare_by_x) > 0 then
-              $site | make_site_subtree([ $data, "left" ])
-          else
-              $site | make_site_subtree([ $data, "right" ])
-          end
+        | $site
+        | make_site_subtree($data)
     else
         if ([ .data, $site ] | compare_nodes($l; $sites)) > 0 then
-            setpath(
-                [ "left" ];
-                .left as $left
-                | if $left | bstree::is_leaf then
-                      $site | make_site_subtree([ $left.data, "left" ])
-                  else
-                      $left | insert_site($site; $l; $sites)
-                  end
-            )
+            setpath([ "left" ]; .left | insert_site($site; $l; $sites))
         else
-            setpath(
-                [ "right" ];
-                .right as $right
-                | if $right | bstree::is_leaf then
-                      $site | make_site_subtree([ $right.data, "right" ])
-                  else
-                      $right | insert_site($site; $l; $sites)
-                  end
-            )
+            setpath([ "right" ]; .right | insert_site($site; $l; $sites))
         end
     end
+;
+
+##
+# Calculates a side of a new breakpoint formed be left & right ark of triplet of supplied circle
+# event.
+# @input {circleEvent} circle event
+# @onput {"left" | "right"} side of a new break point
+def side:
+    point::y as $l
+
+    | ( .triplet[0]
+        | if point::y < $l then
+              parabola::from_point($l)
+              | parabola::to_standard_form
+          else
+              null
+          end ) as $parab1
+    | ( .triplet[2]
+        | if point::y < $l then
+              parabola::from_point($l)
+              | parabola::to_standard_form
+          else
+              null
+          end ) as $parab2
+
+    | if $parab1 != null and $parab2 != null then
+          parabola::intersections($parab1; $parab2) as $breaks
+          | if $breaks | length == 2 then
+                point::distance_euclidean(.center; $breaks[0]) as $dist1
+                | point::distance_euclidean(.center; $breaks[1]) as $dist2
+
+                | if $dist1 < $dist2 then
+                      "left"
+                  else
+                      "right"
+                  end
+            elif $breaks | length == 1 then
+                "left"  # Side doesn't matter
+            else
+                error("No breaks for \(.triplet[0]) \(.triplet[2]) \($l)")
+            end
+      elif $parab1 != null and $parab2 == null then
+          "left"
+      elif $parab1 == null and $parab2 != null then
+          "right"
+      else      # Both parabolas have 0 focus length
+          error("No breaks for \(.triplet[0]) \(.triplet[2]) \($l)")
+      end
 ;
 
 ##
@@ -281,14 +295,13 @@ def remove_ark($circleEvent; $sites; $prec; $next):
         if .data.id == $circleEvent.siteId
                 and $prec != null and $prec.id == $circleEvent.triplet[0].id
                 and $next != null and $next.id == $circleEvent.triplet[2].id then
-            # Found, remove this ark
             null
         else
             .
         end
     else
-        ( .left | bstree::leaves | .[-1] ) as $lastLeft
-        | ( .right | bstree::leaves | .[0] ) as $firstRight
+        ( .left | bstree::last ) as $lastLeft
+        | ( .right | bstree::first ) as $firstRight
 
         | setpath([ "left" ]; .left | remove_ark($circleEvent; $sites; $prec; $firstRight))
         | setpath([ "right" ]; .right | remove_ark($circleEvent; $sites; $lastLeft; $next))
@@ -300,7 +313,34 @@ def remove_ark($circleEvent; $sites; $prec; $next):
           elif .left == null and .right == null then
               null
           else
-              .
+              # Both left & right children are present
+              ( $circleEvent.triplet | map(.id) ) as $arkIds
+
+              | if .data.leftSiteId == $arkIds[0] and .data.rightSiteId == $arkIds[1] then
+                    {
+                        data: {
+                            type: "break",
+                            side: $circleEvent | side,
+                            leftSiteId: .data.leftSiteId,
+                            rightSiteId: $arkIds[2]
+                        },
+                        left: .left,
+                        right: .right
+                    }
+                elif .data.leftSiteId == $arkIds[1] and .data.rightSiteId == $arkIds[2] then
+                    {
+                        data: {
+                            type: "break",
+                            side: $circleEvent | side,
+                            leftSiteId: $arkIds[0],
+                            rightSiteId: .data.rightSiteId
+                        },
+                        left: .left,
+                        right: .right
+                    }
+                else
+                    .
+                end
           end
     end
 ;
@@ -434,6 +474,45 @@ def close_halfedges($triplet; $point):
 ;
 
 ##
+# Clips supplied halfedge using Liang-Barsky algorithm.
+# @input {halfedge} halfedge
+# @output {halfedge} clipped halfedge
+def clip_halfedge($boundaries):
+    . as $halfedge
+    | [ .startPoint, .endPoint ]
+    | line::clip($boundaries) as $clipped
+    | $halfedge
+
+    | if point::equals(.startPoint; $clipped[0]) | not then
+          setpath([ "startPoint" ]; $clipped[0])
+          | setpath([ "startInfinite" ]; true)
+      else
+          .
+      end
+
+    | if point::equals(.endPoint; $clipped[1]) | not then
+          setpath([ "endPoint" ]; $clipped[1])
+          | setpath([ "endInfinite" ]; true)
+      else
+          .
+      end
+;
+
+##
+# Clips all halfedges of voronoi object.
+# @input {voronoi} voronoi object
+# @param $boundaries {[ point, point ]} two points defining the bounding box
+# @output {voronoi} updated voronoi object
+def clip_halfedges($boundaries):
+    setpath(
+        [ "halfedges" ];
+        .halfedges
+        | map(select(.startPoint != null and .endPoint != null))
+        | map(clip_halfedge($boundaries))
+    )
+;
+
+##
 # Handles a site event.
 # @input {voronoi} voronoi object
 # @param $site {site} site event
@@ -441,7 +520,7 @@ def close_halfedges($triplet; $point):
 def handle_site_event($site):
     .sites as $sites
     | ( $site | point::y ) as $l
-    | setpath([ "bstree" ]; .bstree | insert_site($site; $l; $sites))
+    | setpath([ "bstree" ]; .bstree | insert_site($site; $l; $sites) | bstree::rebalance)
     | recalculate_circle_events
 
     # Create a new edge
@@ -459,7 +538,10 @@ def handle_site_event($site):
 # @output {voronoi} updated voronoi object
 def handle_circle_event($circleEvent):
     .sites as $sites
-    | setpath([ "bstree" ]; .bstree | remove_ark($circleEvent; $sites; null; null))
+    | setpath(
+          [ "bstree" ];
+          .bstree | remove_ark($circleEvent; $sites; null; null) | bstree::rebalance
+      )
 
     # Close edges of disappeared site
     | close_halfedges($circleEvent.triplet; $circleEvent.center)
@@ -623,7 +705,7 @@ def remove_zero_length_halhedges:
         | map(select(
               .startPoint != null
               and .endPoint != null
-              and point::equals(.startPoint; .endPoint) | not))
+              and point::are_close(.startPoint; .endPoint) | not))
         | helpers::key_by(.id)
     )
 ;
@@ -710,14 +792,39 @@ def create_cells($boundaries):
 # @param $boundaries {[ point, point ]} two points defining the bounding box
 # @output {cell} closed cell
 def close_cell($boundaries):
+
+    ##
+    # type state = {
+    #     top: point[],
+    #     bottom: point[],
+    #     left: point[],
+    #     right: point[],
+    #     starts: point[],
+    #     ends: point[]
+    # }
+
+    ##
+    # Adds a new start point to state object.
+    # @input {state} state object
+    # @output {state} updated state object
     def add_start($startPoint):
         setpath([ "starts" ]; .starts + [ $startPoint ])
     ;
 
+    ##
+    # Adds a new end point to state object.
+    # @input {state} state object
+    # @output {state} updated state object
     def add_end($endPoint):
         setpath([ "ends" ]; .ends + [ $endPoint ])
     ;
 
+    ##
+    # Inserts provided $point into right border of supplied state object.
+    # @input {state} state object
+    # @param $point {point} point to insert
+    # @param $borders {[ minX: number, minY: number, maxX: number, maxY: number ]} borders
+    # @output {state} updated state object
     def insert_in_border($point; $borders):
         ( $point | point::x ) as $x
         | ( $point | point::y ) as $y
@@ -738,6 +845,14 @@ def close_cell($boundaries):
           end
     ;
 
+    ##
+    # Looks for end point, situated on the border of voronoi diagram, next to provided $start point.
+    # Border points are counter-clockwise ordered and forms a closed square.
+    # @input {point[]} array of counter-clockwise ordered points situated on the borders of voronoi
+    #        diagram
+    # @param $start {point} start point
+    # @param $endPoints {point[]} know end points
+    # @output {point} found end point
     def find_end($start; $endPoints):
         . as $orderedPoints
 
@@ -937,10 +1052,11 @@ def fortune($boundaries):
               end
         )
 
-      # Clean up of halfedges with zero length, necessary in some degenerate cases
-      | remove_zero_length_halhedges
-
       | close_unclosed_half_edges($boundaries)
+
+      | clip_halfedges($boundaries)
+
+      | remove_zero_length_halhedges
 
       | create_cells($boundaries)
 

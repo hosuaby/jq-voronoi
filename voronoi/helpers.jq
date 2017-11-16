@@ -5,6 +5,38 @@ module "helpers";
 #
 # @author hosuaby
 
+# Largest positive number on IEEE754 double-precision (64-bit)
+def PLUS_INFINITY: 9007199254740992;
+
+# Smallest negative number on IEEE754 double-precision (64-bit)
+def MINUS_INFINITY: -9007199254740992;
+
+# Infinitely small number
+def EPSILON: 1e-9;
+
+##
+# Returns absolute value of supplied number.
+# Note: this method is needed because builtin fabs is not always available.
+# @input {number} a number
+# @output {number} absolute value of the number
+def abs:
+    if . >= 0 then
+        .
+    else
+        -.
+    end
+;
+
+##
+# Tests if difference between supplied number & $other number is less that EPSILON (numbers are very
+# close).
+# @input {number} a number
+# @param $other {number} other number
+# @output {boolean} true - two numbers are very close, false - numbers are far from each other
+def is_close_to($other):
+    (. - $other | abs) < EPSILON
+;
+
 ##
 # Produces array of bigrams (two successive elements) from supplied array.
 # Precondition: supplied array must have at least two elements.

@@ -10,6 +10,7 @@ import "fortune" as fortune;
 # @input {point[]} array of points. First two points are diagram boundaries, the rest are sites
 #
 # @author hosuaby
+
 [ .[0], . [1] ] as $boundaries
 | .[2:] as $sites
 | $sites

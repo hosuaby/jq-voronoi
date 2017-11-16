@@ -34,18 +34,26 @@ else
     exit 1
 fi
 
+points=()   # generated points
+
 echo -n "["
-echo -n "[0, 0], [$width, $height],"
+echo -n "[0, 0], [$width, $height], "
 
 for (( i=1; i<=$nbPoints; i++ ))
 do
-    x=$[($RANDOM % ($width + 1))]
-    y=$[($RANDOM % ($height + 1))]
+    while : ; do
+        x=$[($RANDOM % ($width + 1))]
+        y=$[($RANDOM % ($height + 1))]
+        p="[$x, $y]"
+        [[ " ${points[@]} " =~ " ${p} " ]] || break
+    done
 
-    echo -n "[$x, $y]"
+    points+=("$p")
+
+    echo -n "$p"
 
     if [ "$i" -lt "$nbPoints" ]; then
-        echo -n ","
+        echo -n ", "
     fi
 done
 

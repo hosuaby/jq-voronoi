@@ -1,5 +1,7 @@
 module "point";
 
+import "helpers" as helpers;
+
 ##
 # Cartesian point.
 #
@@ -46,6 +48,20 @@ def equals($a; $b):
     | ( $b | x ) as $bx
     | ( $b | y ) as $by
     | $ax == $bx and $ay == $by
+;
+
+##
+# Tests if two points $a and $b are close one to another.
+# @input {void} nothing
+# @param $a {point} point 'a'
+# @param $b {point} point 'b'
+# @output {boolean} true if two points are very close, false if not
+def are_close($a; $b):
+    ( $a | x ) as $ax
+    | ( $a | y ) as $ay
+    | ( $b | x ) as $bx
+    | ( $b | y ) as $by
+    | ($ax | helpers::is_close_to($bx)) and ($ay | helpers::is_close_to($by))
 ;
 
 ##

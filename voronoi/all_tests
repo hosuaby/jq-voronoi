@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+# Get directory of this script
+SCRIPT=`realpath -s $0`
+BASEDIR=`dirname $SCRIPT`
+
+find -type f -name "*.test" -exec jq -L "$BASEDIR" --run-tests {} \; \
+| sed  's/^\*\*\* Expected.\+/\o33[91m\0\o33[0m/g'  # Color failed tests in red
