@@ -10,6 +10,38 @@ import "line" as line; line::midpoint
 [[-1, 2], [3, -6]]
 [1, -2]
 
+import "line" as line; line::is_vertical
+[[5, 3], [5, 42]]
+true
+
+import "line" as line; line::is_vertical
+[[3, 5], [42, 5]]
+false
+
+import "line" as line; line::is_vertical
+[[2, 7], [6, 5]]
+false
+
+import "line" as line; line::is_horizontal
+[[3, 5], [42, 5]]
+true
+
+import "line" as line; line::is_horizontal
+[[5, 3], [5, 42]]
+false
+
+import "line" as line; line::is_horizontal
+[[2, 7], [6, 5]]
+false
+
+import "line" as line; line::is_horizontal_line
+[-2, 11]
+false
+
+import "line" as line; line::is_horizontal_line
+[0, 11]
+true
+
 import "line" as line; line::slope
 [[3, 5], [2, 7]]
 -2
@@ -37,6 +69,50 @@ import "line" as line; try line::perpendicular([6, 9]) catch .
 import "line" as line; line::form_by_y
 [-2, 11]
 [-0.5, 5.5]
+
+import "line" as line; line::is_on_segment([ [2, 2], [5, 8] ])
+[4, 6]
+true
+
+import "line" as line; line::is_on_segment([ [5, 8], [2, 2] ])
+[4, 6]
+true
+
+import "line" as line; line::is_on_segment([ [2, 2], [5, 8] ])
+[5, 6]
+false
+
+import "line" as line; line::segment_intersection
+[ [[2, 2], [5, 8]], [[2, 7], [6, 5]] ]
+[4, 6]
+
+import "line" as line; line::segment_intersection
+[ [[3, 3], [5, 1]], [[1, 2], [7, 5]] ]
+[3, 3]
+
+import "line" as line; line::segment_intersection
+[ [[3, 4], [1, 6]], [[1, 2], [7, 5]] ]
+null
+
+import "line" as line; line::segment_intersection
+[ [[5, 4], [1, 2]], [[3, 5], [7, 5]] ]
+null
+
+import "line" as line; line::segment_intersection
+[[[-0.33579365493673047,-0.4237907672941246],[-0.33579365493673047,0.1595349620867707]], [[0,0],[9007199254740992,0]]]
+null
+
+import "line" as line; line::line_to_segment(0; 10)
+[-2, 11]
+[ [0, 11], [10, -9] ]
+
+import "line" as line; line::dist_line_to_point([ 5, 1 ])
+[2, -3]
+2.6832815729997477
+
+import "line" as line; line::line_intersection
+[[-0.5, 8], [2, -2]]
+[ 4, 6 ]
 
 import "line" as line; line::clip([[70, 60], [230, 150]])
 [[30, 20], [280, 160]]

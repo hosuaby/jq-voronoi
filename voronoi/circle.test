@@ -17,3 +17,19 @@ import "circle" as circle; circle::from_triplet
 import "circle" as circle; circle::bottom
 { "center": [4, 7], "radius": 2 }
 [ 4, 9 ]
+
+import "circle" as circle; circle::is_inside({ "center": [3, 4], "radius": 2 })
+[ 3, 3 ]
+true
+
+import "circle" as circle; circle::is_inside({ "center": [3, 4], "radius": 2 })
+[ 3, 5 ]
+true
+
+import "circle" as circle; circle::is_inside({ "center": [3, 4], "radius": 2 })
+[ 2, 2 ]
+false
+
+import "circle" as circle; circle::biggest_inner_square
+{ "center": [0, 0], "radius": 1.4142135623730951 }
+[ [-1, -1], [1, 1] ]

@@ -1,0 +1,26 @@
+import "rectangle" as rectangle; rectangle::box
+[ [2, 1], [6, 1], [4, 4], [9, 2], [6, 8], [2, 6] ]
+[ [2, 1], [9, 8] ]
+
+import "rectangle" as rectangle; rectangle::within([[10, 20], [100, 200]])
+[ 74, 197 ]
+[ 74, 197 ]
+
+import "rectangle" as rectangle; rectangle::within([[10, 20], [100, 200]])
+[ 174, 197 ]
+
+import "rectangle" as rectangle; rectangle::is_inside([[10, 20], [100, 200]])
+[ 74, 197 ]
+true
+
+import "rectangle" as rectangle; rectangle::is_inside([[10, 20], [100, 200]])
+[ 174, 197 ]
+false
+
+import "rectangle" as rectangle; rectangle::center
+[ [2, 1], [10, 9] ]
+[ 6, 5 ]
+
+import "rectangle" as rectangle; rectangle::to_polygon
+[ [2, 1], [10, 9] ]
+[ [2, 1], [2, 9], [10, 9], [10, 1] ]

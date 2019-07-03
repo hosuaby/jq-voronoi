@@ -57,7 +57,7 @@ def is_leaf:
 # @input {node<T>} node
 # @output {T} value of the first node
 def first:
-    last(recurse(.left)) | .data
+    last(recurse(.left; . != null)) | .data
 ;
 
 ##
@@ -65,7 +65,7 @@ def first:
 # @input {node<T>} node
 # @output {T} value of the last node
 def last:
-    last(recurse(.right)) | .data
+    last(recurse(.right; . != null)) | .data
 ;
 
 ##

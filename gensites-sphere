@@ -1,0 +1,63 @@
+#!/usr/bin/awk -f
+
+##
+# https://www.unix.com/shell-programming-and-scripting/113619-awk-trig-functions.html
+function acos(x) {
+    return atan2(sqrt(1-x*x), x);
+}
+
+##
+# Generates uniformly distributed points on sphere.
+# http://mathworld.wolfram.com/SpherePointPicking.html
+function randomPoint() {
+    u = rand();
+    v = rand();
+
+    azimuth = 2 * PI * u;
+    zenith = acos(2 * v - 1);
+
+    point[0] = azimuth;
+    point[1] = zenith;
+
+    return azimuth "," zenith;
+}
+
+BEGIN {
+    DEFAULT_NB_SITES = 100;
+    PI = 3.14159265359;
+
+    if (ARGC == 1) {
+        nbSites = DEFAULT_NB_SITES;
+    } else if (ARGC == 2) {
+        nbSites = ARGV[1];
+    } else {
+        print \
+            "Generator of random sites on sphere. Outputs the sequence of points expressed in spherical\n" \
+            "coordinates (azimuth, zenith) where 0 <= azimuth <= 2PI & 0 <= zenith <= PI\n" \
+            "Usage: gensites-sphere              # nbSites=100\n" \
+            "       or\n" \
+            "       gensites-sphere [nbSites]";
+    }
+
+    srand();
+
+    print "[";
+
+    for (i = O; i < nbSites; i++) {
+        do {
+            str = randomPoint();
+        } while (str in sites);
+
+        sites[str] = 1;
+
+        if (i < nbSites - 1) {
+            ending = ","
+        } else {
+            ending = "";
+        }
+
+        print "\t[ " azimuth ", " zenith " ]" ending;
+    }
+
+    print "]";
+}

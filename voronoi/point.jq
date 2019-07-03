@@ -83,18 +83,36 @@ def distance_euclidean($a; $b):
     )
 ;
 
+# TODO: doc
+def orientation:
+    map(x) as [ $x1, $x2, $x3 ]
+    | map(y) as [ $y1, $y2, $y3 ]
+    | ($y2 - $y1) * ($x3 - $x2) - ($y3 - $y2) * ($x2 - $x1)
+    | helpers::if_else(helpers::is_close_to(0); 0; .)
+    | helpers::sign
+;
+
+# TODO: doc
+def are_clockwise:
+    orientation > 0
+;
+
 ##
 # Tests if tree supplied points are counter-clockwise ordered.
 # @input {[ point, point, point ]} triplet of points
 # @output {boolean} true - if three points are counter-clockwise ordered, false if not
 # @see http://www.geeksforgeeks.org/orientation-3-ordered-points/
 def are_counterclockwise:
-    map(x) as [ $x1, $x2, $x3 ]
-    | map(y) as [ $y1, $y2, $y3 ]
+    #map(x) as [ $x1, $x2, $x3 ]
+    #| map(y) as [ $y1, $y2, $y3 ]
 
     # Points are counter-clockwise ordered if:
     #   (y2 - y1)*(x3 - x2) - (y3 - y2)*(x2 - x1) < 0
-    | ($y2 - $y1) * ($x3 - $x2) - ($y3 - $y2) * ($x2 - $x1) < 0
+    orientation < 0
+;
+
+def are_collinear:
+    orientation == 0
 ;
 
 ##

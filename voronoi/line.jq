@@ -36,6 +36,36 @@ def midpoint:
 ;
 
 ##
+# Tests if supplied line segment is vertical.
+# @input {segment} line segment
+# @output {boolean} true - if line segment is vertical, false if not
+def is_vertical:
+    ( .[0] | point::x ) as $x1
+    | ( .[1] | point::x ) as $x2
+    | $x1 == $x2
+;
+
+##
+# Tests if supplied line segment is horizontal.
+# @input {segment} line segment
+# @output {boolean} true - if line segment is horizontal, false if not
+def is_horizontal:
+    ( .[0] | point::y ) as $y1
+    | ( .[1] | point::y ) as $y2
+    | $y1 == $y2
+;
+
+##
+# Tests if line expressed in gradient-intercept (by x: y = mx + b) form is horizontal. Horizontal
+# line cannot be expressed in form by y: x = my + c.
+# @input {[ number, number ]} line in gradient-intercept form
+# @output {boolean} true if line is horizontal, false if not.
+def is_horizontal_line:
+    . as [ $slope, $intercept ]
+    | $slope == 0
+;
+
+##
 # Calculates slope of supplied line segment.
 # @input {segment} line segment
 # @output {number} slope of line segment
@@ -57,7 +87,7 @@ def slope:
 # Gradient-intercept form of the line:
 #       y = mx + b
 #       where m - slope & b - intercept
-# @input {[ point, point ]} pair of points
+# @input {segment} line segment
 # @output {[ number, number ]} respectively m & b of gradient-intercept of the line
 # @see https://www.mathplanet.com/education/algebra-1/formulating-linear-equations/writing-linear-equations-using-the-slope-intercept-form
 def to_gradient_intercept_form:
@@ -119,6 +149,146 @@ def form_by_y:
       else
           error("Horizontal line can not be expressed in form x = 1/m * y - c")
       end
+;
+
+##
+# Tests if supplied point lays on $segment.
+# @input {point} a point
+# @param $segment {segment} line segment
+# @output {boolean} true - if point lays on segment, false if not
+#
+# @see https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
+def is_on_segment($segment):
+    . as $point
+    | . as [ $x, $y ]
+    | ( [ $segment[], $point ] | point::are_collinear ) as $colinear
+
+    | $segment as [ [$x1, $y1], [$x2, $y2] ]
+
+    | ( [ $x1, $x2 ] | sort ) as [ $minX, $maxX ]
+    | ( [ $y1, $y2 ] | sort ) as [ $minY, $maxY ]
+
+    | $colinear
+      and $x >= $minX - helpers::EPSILON
+      and $x <= $maxX + helpers::EPSILON
+      and $y >= $minY - helpers::EPSILON
+      and $y <= $maxY + helpers::EPSILON
+;
+
+##
+# @see https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
+def do_intersect:
+    . as [ $seg1, $seg2 ]
+    | . as [ [$p1, $q1], [$p2, $q2] ]
+
+    | ( [$p1, $q1, $p2] | point::orientation ) as $o1
+    | ( [$p1, $q1, $q2] | point::orientation ) as $o2
+    | ( [$p2, $q2, $p1] | point::orientation ) as $o3
+    | ( [$p2, $q2, $q1] | point::orientation ) as $o4
+
+    | ($o1 != $o2 and $o3 != $o4)
+      or
+      ($o1 == 0 and ($p2 | is_on_segment($seg1)))
+      or
+      ($o2 == 0 and ($q2 | is_on_segment($seg1)))
+      or
+      ($o3 == 0 and ($q1 | is_on_segment($seg2)))
+      or
+      ($o4 == 0 and ($q1 | is_on_segment($seg2)))
+;
+
+##
+# Calculates intersection point of two line segments.
+# @input {segment[2]} two line segments
+# @output {point | null} intersection point, or null if no intersection found
+# @see http://www.cs.swan.ac.uk/~cssimon/line_intersection.html
+def segment_intersection:
+    . as [ [[$x1, $y1], [$x2, $y2]], [[$x3, $y3], [$x4, $y4]] ]
+
+    | ( ($y3 - $y4)*($x1 - $x3) + ($x4 - $x3)*($y1 - $y3) ) as $na
+    | ( ($x4 - $x3)*($y1 - $y2) - ($x1 - $x2)*($y4 - $y3) ) as $da
+    | ( ($y1 - $y2)*($x1 - $x3) + ($x2 - $x1)*($y1 - $y3) ) as $nb
+    | ( ($x4 - $x3)*($y1 - $y2) - ($x1 - $x2)*($y4 - $y3) ) as $db
+
+    | if $da == 0 or $db == 0 then
+          null
+      else
+          ( $na / $da ) as $ta
+          | ( $nb / $db ) as $tb
+
+          | if $ta >= 0
+               and $ta <= 1
+               and $tb >= 0
+               and $tb <= 1 then
+                ( $x1 + $ta*($x2 - $x1) ) as $x
+                | ( $y1 + $ta*($y2 - $y1) ) as $y
+                | [ $x, $y ]
+            else
+                null
+            end
+      end
+;
+
+##
+# Calculates intersection point of two lines expressed in gradient-intercept form.
+# @input {[ number, number ][2]} two lines in gradient-intercept form
+# @output {point} intersection point
+def line_intersection:
+    . as [ [$m1, $b1], [$m2, $b2] ]
+    | (($b2 - $b1) / ($m1 - $m2)) as $x
+    | ($m1 * $x + $b1) as $y
+    | [$x, $y]
+;
+
+##
+# Calculates intersection point between line and segment.
+# @input {[ number, number ]} line in gradient-intercept form
+# @param {segment} segment
+# @output {point | empty} intersection point between line and segment
+def intersection_line_segment($segment):
+    . as $vectorLine
+
+    | if $segment | is_vertical then
+          $segment[0][0] as $x
+          | $vectorLine
+          | eval($x) as $y
+          | [ $x, $y ]
+      else
+          $segment
+          | to_gradient_intercept_form as $line
+          | [ $vectorLine, $line ]
+          | line_intersection
+      end
+
+    | select(is_on_segment($segment))
+;
+
+##
+# Transforms supplied line expressed in gradient-intercept form to line segment respecting $minX and
+# $maxX.
+# @input {[ number, number ]} line in gradient-intercept form
+# @param $minX {number} min X
+# @param $maxX {number} max X
+# @output {segment} line segment
+def line_to_segment($minX; $maxX):
+    . as $line_by_x
+
+    | ( $line_by_x | eval($minX) ) as $leftBorderY
+    | ( $line_by_x | eval($maxX) ) as $rightBorderY
+
+    | [ [$minX, $leftBorderY], [$maxX, $rightBorderY] ]
+;
+
+##
+# Calculates distance between supplied line and $point. Distance between line and point is measured
+# as length of the segment of perpendicular line from $point and intersection with line.
+# @input {[ number, number ]} line in gradient-intercept form
+# @param $point {point} point
+# @output {number} distance between point and line
+def dist_line_to_point($point):
+    [ ., perpendicular($point) ]
+    | line_intersection
+    | point::distance_euclidean(.; $point)
 ;
 
 ##

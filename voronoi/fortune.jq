@@ -604,7 +604,7 @@ def close_halfedge($sites; $boundaries):
           | ( $line_by_x | line::form_by_y ) as $line_by_y
 
           # Find intersection of the line with all four borders of the box.
-          # All four intersections are garranted to exist as line is not strictly vertical or
+          # All four intersections are guaranteed to exist as line is not strictly vertical or
           # horizontal.
           | ( $line_by_x | line::eval($minX) ) as $leftBorderY
           | ( $line_by_x | line::eval($maxX) ) as $rightBorderY
