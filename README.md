@@ -3,7 +3,7 @@ Implementation of Fortune's algorithm to calculate Voronoi diagram on
 [jq](https://stedolan.github.io/jq/)
 
 <p align="center">
-    <img height="600px" src="https://cdn.rawgit.com/hosuaby/jq-voronoi/develop/docs/bluejay_voronoi.jpg" />
+    <img height="600px" src="https://cdn.rawgit.com/hosuaby/jq-voronoi/master/docs/bluejay_voronoi.jpg" />
 </p>
 
 ## Try it
@@ -23,7 +23,7 @@ list of voronoi cells (polygons delimiting zone of influence of sites). Script `
 Consider the following example:
 
 <p align="center">
-    <img src="https://cdn.rawgit.com/hosuaby/jq-voronoi/develop/docs/doc_1.svg"
+    <img src="https://cdn.rawgit.com/hosuaby/jq-voronoi/master/docs/doc_1.svg"
         width="200px"
         height="200px" />
 </p>
@@ -93,7 +93,7 @@ Voronoi diagram for
 `[[0, 0], [100, 100], [20, 15], [60, 10], [90, 20], [45, 40], [25, 65], [65, 80]]`:
 
 <p align="center">
-    <img src="https://cdn.rawgit.com/hosuaby/jq-voronoi/develop/docs/doc_2.svg"
+    <img src="https://cdn.rawgit.com/hosuaby/jq-voronoi/master/docs/doc_2.svg"
         width="150px"
         height="150px" />
 </p>
@@ -118,5 +118,5 @@ $ display 50 50 150 150       # bounding box [50, 50] -> [150, 150]
 ```
 
 <p align="center">
-    <img src="https://cdn.rawgit.com/hosuaby/jq-voronoi/develop/docs/doc_3.png" />
+    <img src="https://cdn.rawgit.com/hosuaby/jq-voronoi/master/docs/doc_3.png" />
 </p>
