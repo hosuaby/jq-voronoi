@@ -1,6 +1,7 @@
 module "spherical_voronoi";
 
-import "helpers" as helpers;
+include "helpers";
+
 import "point" as point;
 import "circle" as circle;
 import "rectangle" as rectangle;
@@ -18,15 +19,11 @@ import "voronoi_basin" as vb;
 # @author hosuaby
 
 ##
-# Tests if supplied cell lays completely inside $box.
-# @input {cell} voronoi cell on the plane
+# Tests if supplied planar voronoi cell lays completely inside bounding box (no vertex laying on the
+# box border).
+# @input {cell} planar voronoi cell
 # @param $box {rectangle} bounding box
-# @output {boolean} true if cell lays completely inside box, false in not.
-def is_cell_inside_box($box):
-    map(rectangle::is_inside($box))
-    | all
-;
-
+# @output {boolean} true - if cell is completely inside bounding box, false if not.
 def is_bound_cell($box):
     . as $cell
     | map(rectangle::is_inside($box))
@@ -42,13 +39,18 @@ def is_bound_cell($box):
 def remove_vertexes_on_border($box):
     .[0] as $site
     | .[1:]
-    | helpers::count(rectangle::is_inside($box)) as $nbInside
-    | until(.[:$nbInside] | all(rectangle::is_inside($box)); helpers::rotate_left)
+    | count(rectangle::is_inside($box)) as $nbInside
+    | until(.[:$nbInside] | all(rectangle::is_inside($box)); rotate_left)
     | .[:$nbInside]
     | [ $site, .[] ]
 ;
 
-def merge_two_cells:
+##
+# Merges two parts of the same spherical voronoi into one.
+# Pre-condition: two supplied parts of cell must have the same site.
+# @input {sphericalPoint[][2]} two parts of the same cell
+# @output {sphericalPoint[]} a single spherical voronoi cell
+def merge_cell:
     . as [ $cell1, $cell2 ]
     | $cell1[0] as $site
 
@@ -72,7 +74,7 @@ def project_vertex($site):
 ##
 # Projects voronoi cell from plane to sphere surface.
 # @input {cell} voronoi cell on the plane
-# @output {cell} voronoi cell on the sphere
+# @output {sphericalPoint[]} voronoi cell on the sphere
 def project_cell:
     map(sphere::cartesian_to_polar(1))
     | .[0] as $site
@@ -85,25 +87,11 @@ def project_cell:
       ]
 ;
 
-def project_unbound_cell($box):
-    ( .[0] | sphere::cartesian_to_polar(1) ) as $site
-
-    | .[1:]
-    | map(
-          if rectangle::is_inside($box) then
-              sphere::cartesian_to_polar(1)
-              | project_vertex($site)
-          else
-              sphere::cartesian_to_spherical
-          end
-      )
-
-    | [
-          ( $site | sphere::polar_to_spherical ),
-          .[]
-      ]
-;
-
+##
+# Projects cell from sphere surface on plane using stereographic projection of circles (each vertex
+# of voronoi cell is a center of the circle between 3 or more sites).
+# @input {sphericalPoint[]} voronoi cell on the sphere
+# @output {cell} voronoi cell on the plane
 def project_cell_to_plane:
     .[0] as $site
     | .[1:]
@@ -117,6 +105,10 @@ def project_cell_to_plane:
       ]
 ;
 
+##
+# Computes polar region as imaginary voronoi cell with site in north pole.
+# @input {sphericalPoint[]} non north pole sites
+# @output {sphericalPoint[]} imaginary polar voronoi cell
 def polar_cell:
     map(sphere::spherical_flip)
     | map(sphere::spherical_to_cartesian) as $sites
@@ -134,42 +126,11 @@ def polar_cell:
 ;
 
 ##
-# @input {sphericalPoint} non north pole sites
-# @output {sphericalPoint[]} spherical polygon bounding the polar region
-def polar_region:
-    map(sphere::spherical_flip)
-    | map(sphere::spherical_to_cartesian)
-
-    | vb::voronoi_region([0, 0])
-
-    | [ [0, 0], .[] ]
-    | project_cell
-    | .[1:]
-
-    | map(sphere::spherical_flip)
-;
-
-##
-# @input {sphericalPoint[]} spherical polygon bounding the polar region
-def project_polar_region:
-    map({ center: ., radius: sphere::spherical_distance_from([ 0, 0 ]) })
-    | map(sphere::circle_to_plane)
-    | map(.center)
-    | map(sphere::polar_to_cartesian(1))
-;
-
-##
-# @input {sphericalPoint[]} polar region
-def polar_box:
-    map(sphere::spherical_flip)
-    | map(sphere::spherical_to_cartesian)
-    | polygon::biggest_inner_circle([0, 0])
-    | circle::biggest_inner_square
-    | map(sphere::cartesian_to_spherical)
-    | map(sphere::spherical_flip)
-    | map(sphere::spherical_to_cartesian)
-;
-
+# Clips planar voronoi cell inside $polygon.
+# Pre-condition: site of the voronoi cell must be inside polygon.
+# @input {cell} planar voronoi cell
+# @param $polygon {polygon} polygon
+# @output {cell} voronoi cell clipped inside polygon.
 def clip($polygon):
     if polygon::is_polygon_inside($polygon) then
         .
@@ -210,13 +171,14 @@ def clip($polygon):
 
         | map(.[])
 
-        | sort_by(polygon::angle($site))
-        | helpers::collapse_by(polygon::angle($site); .[0])
+        | sort_by(point::inclination($site))
+        | collapse_by(point::inclination($site); .[0])
         | [$site, .[]]
     end
 ;
 
 ##
+# Computes part of voronoi diagram that lays inside polar region.
 # @input {sphericalPoint[]} non north pole sites
 # @param $northPole {site[0:1]} optional site on the north pole
 # @output {cell[]} voronoi diagram of polar region
@@ -247,10 +209,10 @@ def north_voronoi($northPole; $polarCell):
                 .[0] as $site
                 | .[1:]
 
-                | helpers::count(polygon::is_on_border($polygon)) as $nbOnBorder
+                | count(polygon::is_on_edge($polygon)) as $nbOnBorder
                 | until(
-                      .[:$nbOnBorder] | all(polygon::is_on_border($polygon));
-                      helpers::rotate_left
+                      .[:$nbOnBorder] | all(polygon::is_on_edge($polygon));
+                      rotate_left
                   )
 
                 | [ $site, .[$nbOnBorder-1], .[$nbOnBorder:][], .[0] ]
@@ -269,7 +231,7 @@ def north_voronoi($northPole; $polarCell):
 # @output {matrix[2]} two Rodrigue's matrices
 def rotation_matrices:
     . as $p
-    | [ $p[0] - sphere::HALF_PI, sphere::HALF_PI ]
+    | [ $p[0] - HALF_PI, HALF_PI ]
     | sphere::to_3d_cartesian as $axe
     | $p[1] as $angle
     | $axe
@@ -314,7 +276,7 @@ def is_whole:
         .[0] as $site
         | .[1:] as $vertexes
         | [ $vertexes[], $vertexes[0] ]
-        | helpers::bigrams
+        | bigrams
         | map([ $site, .[] ])
     ;
 
@@ -323,8 +285,8 @@ def is_whole:
     | map(sphere::excess)
     | add
     | . - sphere::UNIT_SPHERE_AREA
-    | helpers::abs
-    | . < helpers::EPSILON
+    | abs
+    | . < EPSILON
 ;
 
 ##
@@ -348,13 +310,13 @@ def _whole_sphere:
     . as $site
     | rotation_matrices as [ $R, $IR ]
 
-    | ( sphere::PI - 0.001 ) as $zenith
+    | ( PI - 0.001 ) as $zenith
 
     | [
           [ 0, $zenith ],
-          [ sphere::HALF_PI, $zenith ],
-          [ sphere::PI, $zenith ],
-          [ sphere::PI + sphere::HALF_PI, $zenith ]
+          [ HALF_PI, $zenith ],
+          [ PI, $zenith ],
+          [ PI + HALF_PI, $zenith ]
       ]
 
     | map(rotate_site($IR))
@@ -367,7 +329,7 @@ def _slice:
         map(atan2(.[1]; .[0]))
         | [
               .[0],
-              helpers::if_else(.[0] <= .[1]; .[1]; .[1] + sphere::TWO_PI)
+              if_else(.[0] <= .[1]; .[1]; .[1] + TWO_PI)
           ]
         | add
         | . / 2
@@ -375,13 +337,13 @@ def _slice:
     ;
 
     .[1] as $site
-    | helpers::bigrams
+    | bigrams
     | map(_midpoint)
     | map(sphere::cartesian_to_spherical)
 
     | [
           ( $site | sphere::cartesian_to_spherical ),
-          [ 0, sphere::PI ],
+          [ 0, PI ],
           .[0],
           [ 0, 0 ],
           .[1]
@@ -411,7 +373,7 @@ def _orange:
     | sort_by(atan2(.[1]; .[0]))
 
     | [ .[], .[0], .[1] ]
-    | helpers::trigrams
+    | trigrams
     | map(_slice)
 
     | map(rotate_cell($IR))
@@ -427,7 +389,7 @@ def _orange:
 def _spherical_voronoi:
     . as $sites
 
-    | helpers::trigrams
+    | trigrams
     | map(select(sphere::are_collinear | not))
     | .[0]
     | sphere::centroid
@@ -436,7 +398,7 @@ def _spherical_voronoi:
     | $sites
     | map(rotate_site($R))
 
-    | helpers::partitioning_by(sphere::is_spherical_north_pole) as [ $northPole, $notNorthPole ]
+    | partitioning_by(sphere::is_spherical_north_pole) as [ $northPole, $notNorthPole ]
 
     | $notNorthPole
     | polar_cell as $polarCell
@@ -448,7 +410,7 @@ def _spherical_voronoi:
     | map(sphere::spherical_to_cartesian)
     | fortune::fortune($box)
 
-    | helpers::partitioning_by(is_bound_cell($box)) as [ $closed, $open ]
+    | partitioning_by(is_bound_cell($box)) as [ $closed, $open ]
 
     | $closed
     | map(project_cell) as $southPart
@@ -465,8 +427,8 @@ def _spherical_voronoi:
     | sort_by(.[0][1]) as $northPart
 
     | $openCells
-    | helpers::zip($northPart)
-    | map(merge_two_cells) as $northPart
+    | zip($northPart)
+    | map(merge_cell) as $northPart
 
     | [ $northPart[] ,$southPart[] ]
 
@@ -485,7 +447,7 @@ def spherical_voronoi:
     elif length == 1 then
         .[0]
         | _whole_sphere
-    elif length == 2 or ( helpers::trigrams | map(sphere::are_collinear) | all ) then
+    elif length == 2 or ( trigrams | map(sphere::are_collinear) | all ) then
         _orange
     else
         _spherical_voronoi

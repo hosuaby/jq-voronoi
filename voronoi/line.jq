@@ -1,6 +1,7 @@
 module "line";
 
-import "helpers" as helpers;
+include "helpers";
+
 import "point" as point;
 
 ##
@@ -53,16 +54,6 @@ def is_horizontal:
     ( .[0] | point::y ) as $y1
     | ( .[1] | point::y ) as $y2
     | $y1 == $y2
-;
-
-##
-# Tests if line expressed in gradient-intercept (by x: y = mx + b) form is horizontal. Horizontal
-# line cannot be expressed in form by y: x = my + c.
-# @input {[ number, number ]} line in gradient-intercept form
-# @output {boolean} true if line is horizontal, false if not.
-def is_horizontal_line:
-    . as [ $slope, $intercept ]
-    | $slope == 0
 ;
 
 ##
@@ -169,15 +160,18 @@ def is_on_segment($segment):
     | ( [ $y1, $y2 ] | sort ) as [ $minY, $maxY ]
 
     | $colinear
-      and $x >= $minX - helpers::EPSILON
-      and $x <= $maxX + helpers::EPSILON
-      and $y >= $minY - helpers::EPSILON
-      and $y <= $maxY + helpers::EPSILON
+      and $x >= $minX - EPSILON
+      and $x <= $maxX + EPSILON
+      and $y >= $minY - EPSILON
+      and $y <= $maxY + EPSILON
 ;
 
 ##
+# Tests if two segments intersect.
+# @input {segment[2]} two line segments
+# @output {boolean} true - if two segment intersect, false if not
 # @see https://www.geeksforgeeks.org/how-to-check-if-a-given-point-lies-inside-a-polygon/
-def do_intersect:
+def do_segments_intersect:
     . as [ $seg1, $seg2 ]
     | . as [ [$p1, $q1], [$p2, $q2] ]
 
@@ -230,40 +224,6 @@ def segment_intersection:
 ;
 
 ##
-# Calculates intersection point of two lines expressed in gradient-intercept form.
-# @input {[ number, number ][2]} two lines in gradient-intercept form
-# @output {point} intersection point
-def line_intersection:
-    . as [ [$m1, $b1], [$m2, $b2] ]
-    | (($b2 - $b1) / ($m1 - $m2)) as $x
-    | ($m1 * $x + $b1) as $y
-    | [$x, $y]
-;
-
-##
-# Calculates intersection point between line and segment.
-# @input {[ number, number ]} line in gradient-intercept form
-# @param {segment} segment
-# @output {point | empty} intersection point between line and segment
-def intersection_line_segment($segment):
-    . as $vectorLine
-
-    | if $segment | is_vertical then
-          $segment[0][0] as $x
-          | $vectorLine
-          | eval($x) as $y
-          | [ $x, $y ]
-      else
-          $segment
-          | to_gradient_intercept_form as $line
-          | [ $vectorLine, $line ]
-          | line_intersection
-      end
-
-    | select(is_on_segment($segment))
-;
-
-##
 # Transforms supplied line expressed in gradient-intercept form to line segment respecting $minX and
 # $maxX.
 # @input {[ number, number ]} line in gradient-intercept form
@@ -280,18 +240,6 @@ def line_to_segment($minX; $maxX):
 ;
 
 ##
-# Calculates distance between supplied line and $point. Distance between line and point is measured
-# as length of the segment of perpendicular line from $point and intersection with line.
-# @input {[ number, number ]} line in gradient-intercept form
-# @param $point {point} point
-# @output {number} distance between point and line
-def dist_line_to_point($point):
-    [ ., perpendicular($point) ]
-    | line_intersection
-    | point::distance_euclidean(.; $point)
-;
-
-##
 # Clips line segment inside the bounding box using Liang-Barsky algorithm. If input line segment is
 # totally outside the box, methods output is empty.
 # @input {segment} line segment to clip inside the box
@@ -300,7 +248,7 @@ def dist_line_to_point($point):
 # @see http://www.skytopia.com/project/articles/compsci/clipping.html
 def clip($boundaries):
     def approximate($round):
-        if helpers::is_close_to($round) then
+        if is_close_to($round) then
             $round
         else
             .

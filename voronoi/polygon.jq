@@ -1,6 +1,7 @@
 module "polygon";
 
-import "helpers" as helpers;
+include "helpers";
+
 import "point" as point;
 import "line" as line;
 import "sphere" as sphere;
@@ -12,26 +13,13 @@ import "sphere" as sphere;
 #
 # @author hosuaby
 
-# TODO: move into line package
-def angle($center):
-    . as [$x, $y]
-    | ($x - $center.[0]) as $diffX
-    | ($y - $center.[1]) as $diffY
-    | atan2($diffY; $diffX)
-    | if . < 0 then
-          . + sphere::TWO_PI
-      else
-          .
-      end
-;
-
 ##
 # Returns counter-clockwise ordered set of polygon edges.
 # @input {polygon} polygon
 # @output {segment[]} polygon edges
 def edges:
     [ .[], .[0] ]
-    | helpers::bigrams
+    | bigrams
 ;
 
 ##
@@ -61,15 +49,20 @@ def convex_hull:
     min_by(point::y) as $p0
 
     | map(select(point::equals($p0; .) | not))
-    | sort_by(angle($p0))
-    | helpers::collapse_by(angle($p0); max_by(point::distance_euclidean($p0; .)))
+    | sort_by(point::inclination($p0))
+    | collapse_by(point::inclination($p0); max_by(point::distance_euclidean($p0; .)))
 
     | reduce .[2:][] as $point ([ .[1], .[0], $p0 ];
         _while($point)
     )
 ;
 
-def is_on_border($polygon):
+##
+# Tests if supplied point lays on the one of the edges of $polygon.
+# @input {point} point in euclidean space
+# @param $polygon {polygon} polygon
+# @output {boolean} true - if point lays on polygon edge, false in not
+def is_on_edge($polygon):
     . as $point
 
     | $polygon
@@ -80,19 +73,19 @@ def is_on_border($polygon):
 
 ##
 # Tests if supplied point lays inside or on the edge of provided $polygon.
-# @input {point} point if euclidean space
+# @input {point} point in euclidean space
 # @param $polygon {polygon} polygon
 # @output {boolean} true - point is inside or on the edge of polygon, false if not
 def is_inside($polygon):
     . as $point
 
-    | if is_on_border($polygon) then
+    | if is_on_edge($polygon) then
           true
       else
         $polygon
         | edges as $edges
 
-        | [helpers::PLUS_INFINITY, $point[1]] as $extreme
+        | [PLUS_INFINITY, $point[1]] as $extreme
         | [$point, $extreme] as $line
         | $edges
         | map([ ., $line ])
@@ -105,48 +98,31 @@ def is_inside($polygon):
 ;
 
 ##
-# Calculates a biggest inner circle within supplied polygon with center in point $center.
-# @input {polygon} polygon
-# @param {point} euclidean point within polygon
-# @output {circle} biggest euclidean circle within this polygon
-def biggest_inner_circle($center):
-    edges
-    | map(
-          if line::is_vertical then
-              ( $center[0] - .[0][0] )
-              | helpers::abs
-          else
-              line::to_gradient_intercept_form
-              | line::dist_line_to_point($center)
-          end
-      )
-
-    | { center: $center, radius: min }
-;
-
-##
-# @input {segment}
+# Tests if supplied line segment lays completely inside $polygon.
+# @input {segment} line segment
+# @param $polygon {polygon} polygon
+# @output {boolean} true - if segment inside polygon, false if not
 def is_segment_inside($polygon):
     map(is_inside($polygon))
     | all
 ;
 
 ##
-# @input {segment}
-def is_segment_outside($polygon):
-    map(is_inside($polygon) | not)
-    | all
-;
-
-##
+# Tests if supplied polygon lays completely inside $outerPolygon.
 # @input {polygon} this polygon
+# @param $outerPolygon {polygon} outer polygon
+# @output {boolean} true - if polygon is completely inside outer polygon, false if not
 def is_polygon_inside($outerPolygon):
     map(is_inside($outerPolygon))
     | all
 ;
 
 ##
-# @input {segment}
+# Calculates intersections between line segment and convex polygon. Can find up to two
+# intersections.
+# @input {segment} line segment
+# @param $polygon {polygon} polygon
+# @output {point[:2]} intersections between line segment and polygon
 def intersections_segment_polygon($polygon):
     . as $segment
 
@@ -154,7 +130,7 @@ def intersections_segment_polygon($polygon):
     | edges
 
     | map([$segment, .])
-    | map(select(line::do_intersect))
+    | map(select(line::do_segments_intersect))
     | map(
           . as $segments
           | line::segment_intersection
@@ -166,16 +142,6 @@ def intersections_segment_polygon($polygon):
                 | .[0]
             end
       )
-;
-
-##
-# @input {[ number, number ]} line in gradient-intercept form
-def intersections_line_polygon($polygon):
-    . as $line
-
-    | $polygon
-    | edges
-    | map(. as $edge | $line | line::intersection_line_segment($edge))
 ;
 
 ##
@@ -241,31 +207,5 @@ def split($segment):
     | [ .this, .other ]
 
     | map(from_edges)
-    | map(helpers::filter_empty)
-;
-
-def subtract($other):
-    . as $this
-
-    | edges
-    | map(
-          if is_segment_outside($other) then
-              .
-          elif is_polygon_inside($other) then
-              empty
-          else
-              . as $edge
-              | intersections_segment_polygon($other)
-              | .[0]
-              | if $edge[0] | is_inside($other) then
-                    # First point inside
-                    [ ., $edge[1] ]
-                else
-                    # Second point inside
-                    [ $edge[0], . ]
-                end
-          end
-      )
-
-    | flatten(1)
+    | map(filter_empty)
 ;

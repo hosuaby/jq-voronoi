@@ -14,6 +14,12 @@ def MINUS_INFINITY: -9007199254740992;
 # Infinitely small number
 def EPSILON: 1e-9;
 
+# Pi number on IEEE754 double-precision (64-bit)
+def PI: 3.141592653589793;
+
+def HALF_PI: PI / 2;
+def TWO_PI: PI * 2;
+
 ##
 # Shortcut for expression if-then-else.
 # @input {any} anything
@@ -181,16 +187,6 @@ def index:
 ;
 
 ##
-# Sets array element by index.
-# @input {any[]} array
-# @param $index {number} element index
-# @param $elem {any} element to set
-# @input {any[]} updated array
-def set_by_index($index; $elem):
-    [ .[:$index][], $elem, .[$index+1:][] ]
-;
-
-##
 # Creates an object composed of keys from the results of running each element of supplied array
 # through iteratte. The corresponding value of each key is the last element responsible for
 # generating the key.
@@ -345,27 +341,28 @@ def times($n):
     | map($val)
 ;
 
+
 ##
-# Sets $val in position $i of supplied array.
+# Sets array element by index.
 # @input {any[]} array
-# @param $i {number} index
-# @param $val {any} value to set
-# @output {any[]} updated array
-def set_by_index($i; $val):
+# @param $index {number} element index
+# @param $elem {any} element to set
+# @input {any[]} updated array
+def set_by_index($index; $elem):
     . as $array
     | length as $l
 
-    | if $i < $l then
+    | if $index < $l then
           [
-              $array[:$i][],
-              $val,
-              $array[$i+1:][]
+              $array[:$index][],
+              $elem,
+              $array[$index+1:][]
           ]
       else
           [
               $array[],
-              ( null | times($i-$l) | .[] ),
-              $val
+              ( null | times($index-$l) | .[] ),
+              $elem
           ]
       end
 ;

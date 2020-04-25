@@ -1,12 +1,13 @@
 module "fortune";
 
+include "helpers";
+
 import "point" as point;
 import "line" as line;
 import "bstree" as bstree;
 import "queue" as queue;
 import "parabola" as parabola;
 import "circle" as circle;
-import "helpers" as helpers;
 
 ##
 # Implementation of Fortune's algorithm to calculate voronoi diagram.
@@ -130,9 +131,9 @@ def break2point($l; $sites):
                       # Left site is really on the left and right site really on the right of break
                       .[0]
                   elif $side == "left" then
-                      [ helpers::MINUS_INFINITY, $y ]      # minus infinity
+                      [ MINUS_INFINITY, $y ]      # minus infinity
                   else
-                      [ helpers::PLUS_INFINITY, $y ]       # plus infinity
+                      [ PLUS_INFINITY, $y ]       # plus infinity
                   end
             else
                 null    # no intersection
@@ -157,9 +158,9 @@ def break2point($l; $sites):
           | if ($leftSite | point::x) <= ($rightSite | point::x) then
                 $midpoint
             elif $side == "left" then
-                [ helpers::MINUS_INFINITY, $y ]      # minus infinity
+                [ MINUS_INFINITY, $y ]      # minus infinity
             else
-                [ helpers::PLUS_INFINITY, $y ]       # plus infinity
+                [ PLUS_INFINITY, $y ]       # plus infinity
             end
       end
 ;
@@ -351,7 +352,7 @@ def remove_ark($circleEvent; $sites; $prec; $next):
 # @input {site[]} beach line
 # @output {circleEvent[]} array of calculated circle events
 def find_circle_events:
-    helpers::trigrams
+    trigrams
     | map(select(point::are_counterclockwise))
     | map(
         . as $triplet
@@ -396,7 +397,7 @@ def recalculate_circle_events:
 def start_halfedges($newSite):
     ( .bstree
       | bstree::leaves
-      | helpers::trigrams
+      | trigrams
       | .[]
       | select(.[1].id == $newSite.id) ) as $triplet
 
@@ -425,7 +426,7 @@ def start_halfedges($newSite):
 
     | setpath(
         [ "halfedges" ];
-        .halfedges + ( $halfedges | helpers::key_by(.id) )
+        .halfedges + ( $halfedges | key_by(.id) )
     )
 ;
 
@@ -701,12 +702,12 @@ def close_halfedge($sites; $boundaries):
 def remove_zero_length_halhedges:
     setpath([ "halfedges" ];
         .halfedges
-        | helpers::values
+        | values
         | map(select(
               .startPoint != null
               and .endPoint != null
               and point::are_close(.startPoint; .endPoint) | not))
-        | helpers::key_by(.id)
+        | key_by(.id)
     )
 ;
 
@@ -719,7 +720,7 @@ def close_unclosed_half_edges($boundaries):
     . as $voronoi
     | .sites as $sites
     | .halfedges
-    | helpers::values
+    | values
 
     # We only need to find endPoints of half edges open by the end. Those same endPoints will be at
     # the same time startPoints of twin half edges
@@ -749,7 +750,7 @@ def order_halfedges:
     }
     | until((.rest | length) == 0;
           ( .ordered[-1] | .endPoint ) as $lastPoint
-          | ( .rest | helpers::find_first(point::equals($lastPoint; .startPoint)) ) as $found
+          | ( .rest | find_first(point::equals($lastPoint; .startPoint)) ) as $found
           | if $found != null then
                $found as [ $nextHalfedge, $i ]
                | {
@@ -856,10 +857,10 @@ def close_cell($boundaries):
     def find_end($start; $endPoints):
         . as $orderedPoints
 
-        | ( helpers::find_first(point::equals(.; $start)) | .[1] ) as $startIndex
-        | helpers::cyclic_indexes($startIndex)
+        | ( find_first(point::equals(.; $start)) | .[1] ) as $startIndex
+        | cyclic_indexes($startIndex)
         | map([$orderedPoints[.], .])
-        | helpers::find_first(.[0] as $point | $endPoints | any(point::equals(.; $point)))
+        | find_first(.[0] as $point | $endPoints | any(point::equals(.; $point)))
         | .[0]
     ;
 
@@ -916,12 +917,12 @@ def close_cell($boundaries):
 
           .ends as $ends
           | .orderedPoints as $orderedPoints
-          | ( $orderedPoints | helpers::find_first(point::equals(.; $start)) | .[1] ) as $startIndex
+          | ( $orderedPoints | find_first(point::equals(.; $start)) | .[1] ) as $startIndex
           | ( $orderedPoints | find_end($start; $ends) | .[1] ) as $endIndex
 
           | ( $orderedPoints
-              | helpers::extract(helpers::cyclic_indexes($startIndex; $endIndex))
-              | helpers::bigrams
+              | extract(cyclic_indexes($startIndex; $endIndex))
+              | bigrams
               | map({ startPoint: .[0], endPoint: .[1] }) ) as $newHalfedges
           | setpath([ "halfedges" ]; .halfedges + $newHalfedges)
 
@@ -943,7 +944,7 @@ def close_cell($boundaries):
 def close_unbound_cells($boundaries):
     . as $voronoi
     | ( .cells
-        | helpers::values
+        | values
         | map(select(any(.halfedges[]; .startInfinite or .endInfinite)))
         | map(close_cell($boundaries)) ) as $closedCells
 
@@ -957,7 +958,7 @@ def close_unbound_cells($boundaries):
 def reorder_cells_halfedges:
     . as $voronoi
     | .cells
-    | helpers::values
+    | values
     | map(setpath([ "halfedges" ];
           .site.id as $id
           | .halfedges
@@ -1066,7 +1067,7 @@ def fortune($boundaries):
 
       # Output result
       | .cells
-      | helpers::values
+      | values
       | map(
             [[ (.site | point::x), (.site | point::y) ]]     # site
             +

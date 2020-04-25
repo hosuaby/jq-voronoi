@@ -92,17 +92,3 @@ def is_inside($circle):
     point::distance_euclidean(.; $circle.center) as $dist
     | $dist <= $circle.radius
 ;
-
-##
-# Calculates the biggest inner square that fit inside supplied circle.
-# @input {circle} circle
-# @output {rectangle} biggest square inside circle
-def biggest_inner_square:
-    .center as [$x, $y]
-    | .radius as $radius
-    | ( $radius / (2 | sqrt) ) as $halfSide
-    | [
-          [ $x - $halfSide, $y - $halfSide ],
-          [ $x + $halfSide, $y + $halfSide ]
-      ]
-;

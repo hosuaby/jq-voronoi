@@ -1,6 +1,6 @@
 module "linear_algebra";
 
-import "helpers" as helpers;
+include "helpers";
 
 ##
 # Module for general linear algebra functions.
@@ -22,8 +22,8 @@ def identity($n):
     | map(
           . as $i
           | 0
-          | helpers::times($n)
-          | helpers::set_by_index($i; 1)
+          | times($n)
+          | set_by_index($i; 1)
       )
 ;
 
@@ -69,8 +69,8 @@ def multiply_with_matrix($right):
                 . as $column
                 | $rows
                 | map(
-                      helpers::zip($column)
-                      | map(helpers::multiply)
+                      zip($column)
+                      | map(multiply)
                       | add
                   )
             )
@@ -105,11 +105,11 @@ def add_matrix($right):
 
     | if $nbLeftColumns == $nbRightColumns and $nbLeftRows == $nbRightRows then
           $left
-          | helpers::zip($right)
+          | zip($right)
           | map(
                 . as [ $a, $b ]
                 | $a
-                | helpers::zip($b)
+                | zip($b)
                 | map(add)
             )
       else

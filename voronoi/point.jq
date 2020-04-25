@@ -1,6 +1,6 @@
 module "point";
 
-import "helpers" as helpers;
+include "helpers";
 
 ##
 # Cartesian point.
@@ -61,7 +61,7 @@ def are_close($a; $b):
     | ( $a | y ) as $ay
     | ( $b | x ) as $bx
     | ( $b | y ) as $by
-    | ($ax | helpers::is_close_to($bx)) and ($ay | helpers::is_close_to($by))
+    | ($ax | is_close_to($bx)) and ($ay | is_close_to($by))
 ;
 
 ##
@@ -83,16 +83,26 @@ def distance_euclidean($a; $b):
     )
 ;
 
-# TODO: doc
+##
+# Finds orientation of three supplied points. Retuns:
+#   -1 - points are counter-clockwise ordered
+#    0 - points are collinear
+#    1 - points are clockwise ordered
+# @input {[ point, point, point ]} triplet of points
+# @output {number} orientation of points
+# @see http://www.geeksforgeeks.org/orientation-3-ordered-points/
 def orientation:
     map(x) as [ $x1, $x2, $x3 ]
     | map(y) as [ $y1, $y2, $y3 ]
     | ($y2 - $y1) * ($x3 - $x2) - ($y3 - $y2) * ($x2 - $x1)
-    | helpers::if_else(helpers::is_close_to(0); 0; .)
-    | helpers::sign
+    | approximate(0)
+    | sign
 ;
 
-# TODO: doc
+##
+# Tests if tree supplied points are clockwise ordered.
+# @input {[ point, point, point ]} triplet of points
+# @output {boolean} true - if three points are clockwise ordered, false if not
 def are_clockwise:
     orientation > 0
 ;
@@ -101,16 +111,14 @@ def are_clockwise:
 # Tests if tree supplied points are counter-clockwise ordered.
 # @input {[ point, point, point ]} triplet of points
 # @output {boolean} true - if three points are counter-clockwise ordered, false if not
-# @see http://www.geeksforgeeks.org/orientation-3-ordered-points/
 def are_counterclockwise:
-    #map(x) as [ $x1, $x2, $x3 ]
-    #| map(y) as [ $y1, $y2, $y3 ]
-
-    # Points are counter-clockwise ordered if:
-    #   (y2 - y1)*(x3 - x2) - (y3 - y2)*(x2 - x1) < 0
     orientation < 0
 ;
 
+##
+# Tests if tree supplied points are collinear ordered.
+# @input {[ point, point, point ]} triplet of points
+# @output {boolean} true - if three points are counter-clockwise ordered, false if not
 def are_collinear:
     orientation == 0
 ;
@@ -155,4 +163,31 @@ def compare_by_y:
       else
           $Dy
       end
+;
+
+##
+# Calculates an angle between positive abscissa axe and supplied vector with respect to origin.
+# @input {point} point
+# @param $origin {point} origin
+# @output {number} angle
+def inclination($origin):
+    . as [$x, $y]
+    | ($x - $origin.[0]) as $diffX
+    | ($y - $origin.[1]) as $diffY
+
+    | atan2($diffY; $diffX)
+
+    | if . < 0 then
+          . + TWO_PI
+      else
+          .
+      end
+;
+
+##
+# Calculates an angle between positive abscissa axe and supplied vector.
+# @input {point} vector
+# @output {number} angle
+def inclination:
+    inclination([ 0, 0 ])
 ;

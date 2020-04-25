@@ -34,14 +34,6 @@ import "line" as line; line::is_horizontal
 [[2, 7], [6, 5]]
 false
 
-import "line" as line; line::is_horizontal_line
-[-2, 11]
-false
-
-import "line" as line; line::is_horizontal_line
-[0, 11]
-true
-
 import "line" as line; line::slope
 [[3, 5], [2, 7]]
 -2
@@ -82,6 +74,26 @@ import "line" as line; line::is_on_segment([ [2, 2], [5, 8] ])
 [5, 6]
 false
 
+import "line" as line; line::do_segments_intersect
+[ [[2, 2], [5, 8]], [[2, 7], [6, 5]] ]
+true
+
+import "line" as line; line::do_segments_intersect
+[ [[3, 3], [5, 1]], [[1, 2], [7, 5]] ]
+true
+
+import "line" as line; line::do_segments_intersect
+[ [[3, 4], [1, 6]], [[1, 2], [7, 5]] ]
+false
+
+import "line" as line; line::do_segments_intersect
+[ [[5, 4], [1, 2]], [[3, 5], [7, 5]] ]
+false
+
+import "line" as line; line::do_segments_intersect
+[[[-0.33579365493673047,-0.4237907672941246],[-0.33579365493673047,0.1595349620867707]], [[0,0],[9007199254740992,0]]]
+false
+
 import "line" as line; line::segment_intersection
 [ [[2, 2], [5, 8]], [[2, 7], [6, 5]] ]
 [4, 6]
@@ -105,14 +117,6 @@ null
 import "line" as line; line::line_to_segment(0; 10)
 [-2, 11]
 [ [0, 11], [10, -9] ]
-
-import "line" as line; line::dist_line_to_point([ 5, 1 ])
-[2, -3]
-2.6832815729997477
-
-import "line" as line; line::line_intersection
-[[-0.5, 8], [2, -2]]
-[ 4, 6 ]
 
 import "line" as line; line::clip([[70, 60], [230, 150]])
 [[30, 20], [280, 160]]

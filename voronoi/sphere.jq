@@ -1,3 +1,9 @@
+module "sphere";
+
+include "helpers";
+
+import "linear_algebra" as la;
+
 ##
 # Module for work with sphere.
 #
@@ -15,21 +21,11 @@
 #
 # @author hosuaby
 
-import "helpers" as helpers;
-import "linear_algebra" as la;
-
-# TODO: remove and use those from helpers
-# Pi number on IEEE754 double-precision (64-bit)
-def PI: 3.141592653589793;
-
-def HALF_PI: PI / 2;
-def TWO_PI: PI * 2;
-
 def UNIT_SPHERE_AREA: PI * 4;
 
 ##
-# Projects point expressed in spherical coordinates on sphere with diameter equal to 1 to point on
-# the plane expressed in radial coordinates using north pole (0, 0) as projection point.
+# Projects using stereographic projection point expressed in spherical coordinates on unit sphere to
+# point on the plane expressed in radial coordinates using north pole (0, 0) as projection point.
 # @input {sphericalPoint} point in spherical coordinates
 # @output {polarPoint} projection in polar points
 def spherical_to_polar:
@@ -98,7 +94,7 @@ def polar_distance_from($origin):
 # @input {sphericalPoint} point in spherical coordinates
 # @output {boolean} true if point is the north pole, false if not
 def is_spherical_north_pole:
-    .[1] < helpers::EPSILON
+    .[1] < EPSILON
 ;
 
 ##
@@ -107,8 +103,8 @@ def is_spherical_north_pole:
 # @output {boolean} true if point is the south pole, false if not
 def is_spherical_south_pole:
     ( PI - .[1] )
-    | helpers::abs
-    | . < helpers::EPSILON
+    | abs
+    | . < EPSILON
 ;
 
 ##
@@ -160,8 +156,8 @@ def spherical_distance_from($origin):
 # @see https://codegolf.stackexchange.com/questions/63870/spherical-excess-of-a-triangle
 def excess:
     def _approximate:
-        helpers::approximate(-1)
-        | helpers::approximate(1)
+        approximate(-1)
+        | approximate(1)
     ;
 
     . as [ $p1, $p2, $p3 ]
@@ -200,18 +196,7 @@ def excess:
 # @output {boolean} true - if three points are collinear, false if not
 def are_collinear:
     excess
-    | helpers::is_close_to(0)
-;
-
-##
-# Tests if supplied point equals to point in parameter.
-# @input {sphericalPoint} point in spherical coordinates
-# @param {sphericalPoint} point to compare in spherical coordinates
-# @output {boolean} true if two points are equal, false if not
-def spherical_equals_to($other):
-     ( .[0] == $other[0] and .[1] == $other[1] )
-     or
-     ( spherical_distance_from($other) < helpers::EPSILON )
+    | is_close_to(0)
 ;
 
 ##
@@ -221,17 +206,6 @@ def spherical_equals_to($other):
 # @output {sphericalPoint} flipped point
 def spherical_flip:
     [ .[0], PI - .[1] ]
-;
-
-##
-# Finds the closest point from $points to supplied point in spherical coordinates.
-# @input {sphericalPoint} point in spherical coordinates
-# @param {sphericalPoint[]} other points in spherical coordinates
-# @output {sphericalPoint} point from array $points closest to supplied point
-def closest($points):
-    . as $point
-    | $points
-    | min_by(spherical_distance_from($point))
 ;
 
 ##
@@ -334,21 +308,6 @@ def circle_to_plane:
 ;
 
 ##
-# Compares two supplied spherical points first by zenith coordinates, then in case of equality by
-# azimuth coordinates.
-# @input {[sphericalPoint, sphericalPoint]} pair of spherical points
-# @output {number} negative integer - first point is strictly inferior, 0 - two points are equal,
-#         positive integer - first point is strictly superior
-def compare_spherical_points:
-    . as [ [$a1, $z1], [$a2, $z2] ]
-
-    | ( $z1 - $z2 ) as $Dz
-    | ( $a1 - $a2 ) as $Da
-
-    | helpers::if_else($Dz != 0; $Dz; $da)
-;
-
-##
 # Calculates minimum zenith coordinate of site on sphere surface that can be safely (according
 # 64-bit floating point arithmetic) be projected on the plane.
 # @input {void} nothing
@@ -361,17 +320,17 @@ def find_minimum_zenith:
         | cartesian_to_spherical
         | .[1]
         | $original - .
-        | helpers::abs
+        | abs
     ;
 
     [ 0, PI ]
 
-    | until((.[1] - .[0]) <= helpers::EPSILON;
+    | until((.[1] - .[0]) <= EPSILON;
           ( (.[0] + .[1]) / 2 ) as $mid
 
           | ( $mid | delta ) as $delta
 
-          | if ($delta < helpers::EPSILON) then
+          | if ($delta < EPSILON) then
                 [ .[0], $mid ]
             else
                 [ $mid, .[1] ]
@@ -379,72 +338,6 @@ def find_minimum_zenith:
       )
 
     | .[1]
-;
-
-##
-# Calculates Gnomonic projection of supplied point on the plane tangent to sphere in $center.
-# @input {sphericalPoint} point in spherical coordinates
-# @param $center {sphericalPoint} center of projection
-# @output {point} cartesian point, projection on tangent plane
-# @see http://mathworld.wolfram.com/GnomonicProjection.html
-def gnomonic_projection($center):
-    . as $point
-    | spherical_distance_from($center) as $c
-    | ($c | cos) as $cosc
-    | $point as [ $pAzimuth, $pZenith ]
-    | $center as [ $cAzimuth, $cZenith ]
-
-    | ( $pZenith - HALF_PI ) as $pZenith
-    | ( $cZenith - HALF_PI ) as $cZenith
-
-    | ( $pAzimuth - $cAzimuth ) as $diffAzimuth
-
-    | ( ($pZenith | cos) * ($diffAzimuth | sin) / $cosc ) as $x
-
-    | ($cZenith | cos) * ($pZenith | sin)
-      -
-      ($cZenith | sin) * ($pZenith | cos) * ($diffAzimuth | cos)
-    | . / $cosc
-    | . as $y
-
-    | [ $x, $y ]
-;
-
-##
-# Inverse of gnomonic projection.
-# @input {point} cartesian point, projection on tangent plane
-# @param $center {sphericalPoint} center of projection
-# @output {sphericalPoint} point in spherical coordinates
-# @see http://mathworld.wolfram.com/GnomonicProjection.html
-def gnomonic_inverse_projection($center):
-    . as [ $x, $y ]
-    | $center as [ $cAzimuth, $cZenith ]
-    | ( $cZenith - HALF_PI ) as $cZenith
-
-    | $x * $x + $y * $y
-    | sqrt as $p
-
-    | $p
-    | atan as $c
-
-    | ( $c | cos ) * ( $cZenith | sin )
-      +
-      $y * ( $c | sin ) * ( $cZenith | cos ) / $p
-    | asin
-    | ( . + HALF_PI ) as $zenith
-
-    | (
-          $p * ( $cZenith | cos ) * ( $c | cos )
-          -
-          $y * ( $cZenith | sin ) * ( $c | sin )
-      ) as $d
-
-    | ( $x * ( $c | sin ) ) as $n
-
-    | atan2($n; $d)
-    | ( . + $cAzimuth ) as $azimuth
-
-    | [ $azimuth, $zenith ]
 ;
 
 ##
@@ -480,6 +373,9 @@ def from_3d_cartesian:
 ;
 
 ##
+# Calculates cross-product of two points on spherical surface expressed in cartesian coordinates.
+# @input {3dCartesianPoint[2]} two vectors in 3D cartesian space
+# @output {3dCartesianPoint} cross-product of two vectors
 # @see https://www.analyzemath.com/stepbystep_mathworksheets/vectors/cross_product.html
 def cross_product:
     . as [ [$x1, $y1, $z1], [$x2, $y2, $z2] ]

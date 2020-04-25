@@ -1,20 +1,8 @@
-import "spherical_voronoi" as sv; sv::is_cell_inside_box([[0, 0], [10, 10]])
-[ [5, 5], [1, 3], [7, 8], [6, 9] ]
-true
-
-import "spherical_voronoi" as sv; sv::is_cell_inside_box([[0, 0], [10, 10]])
-[ [5, 5], [0, 0], [7, 8], [6, 9] ]
-false
-
-import "spherical_voronoi" as sv; sv::is_cell_inside_box([[0, 0], [10, 10]])
-[ [5, 5], [1, 3], [17, 8], [6, 9] ]
-false
-
 import "spherical_voronoi" as sv; sv::remove_vertexes_on_border([[0, 0], [10, 10]])
 [ [5, 5], [1, 3], [17, 8], [6, 9] ]
 [ [5, 5], [6, 9], [1, 3] ]
 
-import "spherical_voronoi" as sv; sv::merge_two_cells
+import "spherical_voronoi" as sv; sv::merge_cell
 [ [[1.5, 0.5], [1.4, 0.6], [1.9, 0.7], [2, 0.8], [2.1, 0.7]], [[1.5, 0.5], [0.1, 0], [2.9, 0.1]] ]
 [ [1.5, 0.5], [1.4, 0.6], [1.9, 0.7], [2, 0.8], [2.1, 0.7], [0.1, 0], [2.9, 0.1] ]
 

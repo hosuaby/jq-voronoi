@@ -29,7 +29,3 @@ true
 import "circle" as circle; circle::is_inside({ "center": [3, 4], "radius": 2 })
 [ 2, 2 ]
 false
-
-import "circle" as circle; circle::biggest_inner_square
-{ "center": [0, 0], "radius": 1.4142135623730951 }
-[ [-1, -1], [1, 1] ]

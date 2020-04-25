@@ -106,18 +106,6 @@ import "sphere" as sphere; sphere::are_collinear
 [ [3, 1.5], [1, 1], [0.3, 1.5] ]
 false
 
-import "sphere" as sphere; sphere::spherical_equals_to([ 1.7, 1.4 ])
-[ 1.7, 1.4 ]
-true
-
-import "sphere" as sphere; sphere::spherical_equals_to([ 1.7, 0 ])
-[ 2.5, 0 ]
-true
-
-import "sphere" as sphere; sphere::spherical_equals_to([ 1.7, 0 ])
-[ 2.5, 1.5 ]
-false
-
 import "sphere" as sphere; sphere::spherical_flip
 [ 0, 1.57079632679 ]
 [ 0, 1.570796326799793 ]
@@ -129,10 +117,6 @@ import "sphere" as sphere; sphere::spherical_flip
 import "sphere" as sphere; sphere::spherical_flip | sphere::spherical_flip
 [ -1.9711627817482313, 0.20100613910825738 ]
 [ -1.9711627817482313, 0.20100613910825738 ]
-
-import "sphere" as sphere; sphere::closest([ [4.1, 2.4 ], [0.8, 1.9], [5.4, 0.8], [4.5, 1.8], [4.1, 0.3] ])
-[ 4.7, 2.3 ]
-[ 4.1, 2.4 ]
 
 import "sphere" as sphere; sphere::normalize
 [ 1, 2 ]
@@ -157,14 +141,6 @@ import "sphere" as sphere; sphere::circle_to_sphere | sphere::circle_to_plane
 import "sphere" as sphere; sphere::find_minimum_zenith
 null
 7.314590396335798e-10
-
-import "sphere" as sphere; sphere::gnomonic_projection([ 1.5, 1.5 ])
-[ 1.2, 0.7 ]
-[ -0.28499655955255804, -1.0769239645628756 ]
-
-import "sphere" as sphere; sphere::gnomonic_inverse_projection([ 1.5, 1.5 ])
-[ -0.28499655955255804, -1.0769239645628756 ]
-[ 1.2, 0.7 ]
 
 import "sphere" as sphere; sphere::to_3d_cartesian
 [ 1.2, 0.7 ]
