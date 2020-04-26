@@ -120,3 +120,23 @@ $ display 50 50 150 150       # bounding box [50, 50] -> [150, 150]
 <p align="center">
     <img src="https://cdn.rawgit.com/hosuaby/jq-voronoi/master/docs/doc_3.png" />
 </p>
+
+## Voronoi on sphere
+
+Computation of Voronoi diagram on spherical surface is based on whitepaper ["Voronoi diagrams on the sphere" by Hyeon-Suk Na, Chung-Nim Lee & Otfried Cheong](https://www.sciencedirect.com/science/article/pii/S0925772102000779?via%3Dihub). Spherical Voronoi diagram is obtained in time O(_n_ log _n_) from two planar Voronoi diagrams and a little bit of glueing.
+
+In order to compute Voronoi on sphere we must supply sites expressed in spherical coordinates on [unit sphere](https://en.wikipedia.org/wiki/Unit_sphere) _[φ, θ]_, where  
+<pre>
+    <i>0 ≤ φ ≤ 2π (azimuth)</i>
+    <i>0 ≤ θ ≤ π  (zenith)</i>
+</pre>
+
+Example:
+
+```bash
+$ echo '[[1, 1.5], [1, 1], [1, 2.2]]' | ./voronoi.sh -s
+```
+
+<p align="center">
+    <img src="https://cdn.rawgit.com/hosuaby/jq-voronoi/master/docs/sphere.png" />
+</p>
