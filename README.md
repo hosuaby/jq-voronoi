@@ -134,7 +134,13 @@ In order to compute Voronoi on sphere we must supply sites expressed in spherica
 Example:
 
 ```bash
-$ echo '[[1, 1.5], [1, 1], [1, 2.2]]' | ./voronoi.sh -s
+$ echo '[[1, 1.5], [1, 1], [1, 2.2]]' | ./voronoi.sh --sphere
+```
+
+Visualisation is done by Processing sketch:
+
+```bash
+$ ./gensites-sphere | ./voronoi.sh -s | ./display-sphere
 ```
 
 <p align="center">
