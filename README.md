@@ -131,6 +131,8 @@ In order to compute Voronoi on sphere we must supply sites expressed in spherica
     <i>0 ≤ θ ≤ π  (zenith)</i>
 </pre>
 
+Coordinate _[0, 0]_ defines a north pole.
+
 Example:
 
 ```bash
