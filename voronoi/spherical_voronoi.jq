@@ -12,7 +12,7 @@ import "voronoi_basin" as vb;
 
 ##
 # Module for calculation of voronoi diagrams of sphere.
-# Implementation of whitepaper "Voronoi diagrams on the sphere" by Hyeon-Suk Na, Chung-Nim Lee
+# Implementation of paper "Voronoi diagrams on the sphere" by Hyeon-Suk Na, Chung-Nim Lee
 # & Otfried Cheong.
 #
 # @see https://www.sciencedirect.com/science/article/pii/S0925772102000779?via%3Dihub
