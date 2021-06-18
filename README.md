@@ -117,6 +117,12 @@ $ display 600 600             # bounding box [0, 0] -> [600, 600]
 $ display 50 50 150 150       # bounding box [50, 50] -> [150, 150]
 ```
 
+To test visualisation:
+
+```bash
+$ ./gensites | ./voronoi.sh | ./display 600 600
+```
+
 <p align="center">
     <img src="https://cdn.rawgit.com/hosuaby/jq-voronoi/master/docs/doc_3.png" />
 </p>

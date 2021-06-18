@@ -172,8 +172,8 @@ def compare_by_y:
 # @output {number} angle
 def inclination($origin):
     . as [$x, $y]
-    | ($x - $origin.[0]) as $diffX
-    | ($y - $origin.[1]) as $diffY
+    | ($x - $origin[0]) as $diffX
+    | ($y - $origin[1]) as $diffY
 
     | atan2($diffY; $diffX)
 
